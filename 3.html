@@ -77,6 +77,10 @@
     min-height: 36px;
   }
   .pill-btn:hover { background: rgba(255,255,255,0.3); }
+  header.admin-mode {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #0f6fde 100%);
+    border-bottom: 2px solid #fde047;
+  }
   .pill-btn.admin-active {
     background: #fef08a;
     color: #713f12;
@@ -681,16 +685,16 @@
 </head>
 <body>
 
-<header>
+<header id="mainHeader">
   <div class="header-inner">
     <div>
-      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.0</span></h1>
+      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.1</span></h1>
     </div>
     <div class="header-actions">
       <span class="sync-pill" id="liveSyncPill" title="Tự động đồng bộ mỗi 15 giây & ngay khi bấm Lưu">⚪ Chưa gắn link nhóm</span>
       <button class="pill-btn" onclick="openGuideModal()">📖 Hướng dẫn</button>
-      <button class="pill-btn" id="rolePillBtn" onclick="toggleAdminAuth()">👤 Cộng sự (Nhập liệu)</button>
-      <button class="pill-btn" id="aiStatusPill" onclick="toggleSettings()">⚙️ Tên & Cài đặt</button>
+      <button class="pill-btn" id="aiStatusPill" onclick="toggleSettings()">👤 Tên của tôi</button>
+      <button class="pill-btn" id="rolePillBtn" onclick="toggleAdminAuth()" title="Quản trị">🔒</button>
     </div>
   </div>
 </header>
@@ -700,27 +704,23 @@
   <!-- CÀI ĐẶT & PHÂN QUYỀN -->
   <div class="card" id="settingsCard">
     <div class="card-hd">
-      <h2>⚙️ Cài đặt Cá nhân, Phân quyền Trưởng nhóm & Link Đồng bộ</h2>
+      <h2 id="settingsCardTitle">👤 Tên người nhập liệu</h2>
       <button class="ghost sm" onclick="toggleSettings()">Thu gọn</button>
     </div>
 
     <!-- Tên người nhập (ai cũng đặt được) -->
-    <div class="grid" style="margin-bottom:12px">
+    <div class="grid" style="margin-bottom:6px">
       <div class="fld">
-        <label>1. Tên của bạn (hiển thị khi đang nhập ca để chống trùng):</label>
-        <input type="text" id="cfgUser" placeholder="VD: Trang, Mai, Lan, Hùng...">
+        <label>Tên của bạn (hiển thị khi đang nhập ca để tránh làm trùng):</label>
+        <input type="text" id="cfgUser" placeholder="VD: Mai, Lan, Hùng...">
       </div>
       <div class="fld" style="display:flex;align-items:flex-end">
         <button class="ok" onclick="saveCollaboratorName()" style="width:100%">💾 Lưu tên của tôi</button>
       </div>
     </div>
 
-    <!-- Khu vực khóa riêng cho Admin TRANG ĐOÀN -->
-    <div id="adminLockedNotice" class="alert-box alert-info" style="margin-bottom:0">
-      🔒 <b>Chế độ Cộng sự (Nhập liệu phụ):</b> Bạn được phép nhận ca rảnh và nhập dữ liệu lâm sàng. Các cài đặt hệ thống (API Key, Link Script, Mã PIN Admin, Sàng lọc gốc & Xóa dữ liệu) được khóa bảo vệ cho Trưởng nhóm <b>TRANG ĐOÀN</b>.
-      <div style="margin-top:8px">
-        <button class="warn sm" onclick="toggleAdminAuth()">🔑 Mở khóa quyền Admin (TRANG ĐOÀN)</button>
-      </div>
+    <div id="collabAdminHintFooter" style="text-align:right;margin-top:4px">
+      <a href="javascript:void(0)" onclick="toggleAdminAuth()" style="font-size:12px;color:#94a3b8;text-decoration:none">🔐 Quản trị</a>
     </div>
 
     <div id="adminSettingsSection" style="display:none;border-top:1px dashed var(--bd);padding-top:12px;margin-top:8px">
@@ -895,13 +895,13 @@ function doPost(e) {
     </div>
   </div>
 
-  <!-- THANH CHUYỂN ĐỔI 3 TRẠM LÀM VIỆC -->
-  <div class="mode-bar">
+  <!-- THANH CHUYỂN ĐỔI 3 TRẠM LÀM VIỆC (CHỈ HIỆN VỚI ADMIN) -->
+  <div class="mode-bar admin-only" style="display:none">
     <button class="mode-btn active" id="modeBtn_study" onclick="switchMode('study')">
       📚 1. Hồ sơ đã duyệt <span class="mode-badge" id="cntApproved">0</span>
     </button>
     <button class="mode-btn" id="modeBtn_screen" onclick="switchMode('screen')">
-      🔍 2. Phễu Sàng lọc & Rút HS giấy <span class="mode-badge" id="cntScreenAll">0</span>
+      🔍 2. Lọc thô HSBA & Rút HS giấy <span class="mode-badge" id="cntScreenAll">0</span>
     </button>
     <button class="mode-btn" id="modeBtn_bi" onclick="switchMode('bi')">
       📊 3. BI Dashboard & Lưu đồ STROBE
@@ -913,17 +913,13 @@ function doPost(e) {
     <div class="card">
       <div class="card-hd">
         <div>
-          <h2>📊 Hồ sơ đã duyệt</h2>
-          <div class="hint">Tự động đồng bộ mỗi 15 giây & ngay khi bấm <b>Lưu</b>. Ca có nhãn <b>🔒 Tên bạn</b> nghĩa là bạn đó đang mở nhập — hãy chọn ca khác để tránh làm trùng!</div>
+          <h2 id="studyCardTitle">📋 Danh sách Hồ sơ nhập liệu</h2>
+          <div class="hint" id="studyCardHint">Chọn các ca có nhãn <b>🆕 Mới duyệt — Chờ nhập</b> (không có khóa 🔒) để nhập biến số. Ca có nhãn <b>🔒 Tên bạn</b> nghĩa là bạn đó đang mở — hãy chọn ca khác!</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="ok admin-only" onclick="createApprovedCase(false)">➕ Thêm ca đạt chuẩn mới</button>
-          <button class="ghost" onclick="exportFullExcel()">📗 Xuất Excel (.xlsx)</button>
+          <button class="ghost admin-only" onclick="exportFullExcel()">📗 Xuất Excel (.xlsx)</button>
         </div>
-      </div>
-
-      <div id="collabStudyNotice" class="alert-box alert-info" style="display:none">
-        👋 <b>Hướng dẫn Cộng sự:</b> Hãy chọn các ca có nhãn <b>🆕 Mới duyệt — Chờ nhập</b> (không có khóa 🔒) để nhập biến số lâm sàng. Hồ sơ đã được Trưởng nhóm gắn nhãn <b>🔐 Đã chốt</b> sẽ ở chế độ chỉ đọc để tránh sửa nhầm. <a href="javascript:void(0)" onclick="openGuideModal()" style="font-weight:700;color:var(--pri-dark)">Xem hướng dẫn chi tiết →</a>
       </div>
 
       <div class="stats" id="studyStatsBar"></div>
@@ -931,16 +927,16 @@ function doPost(e) {
       <div class="toolbar">
         <input type="text" id="studySearch" placeholder="🔍 Tìm Mã HSBA, Mã NC (NC_001...), Họ tên, Địa chỉ, Người nhập..." oninput="renderStudyTable()">
         <select id="studyFilter" onchange="renderStudyTable()">
-          <option value="all">Tất cả ca đã duyệt</option>
+          <option value="all">Tất cả hồ sơ</option>
           <option value="free_to_claim">🆓 Ca đang rảnh (Chưa ai mở & Chưa xong — Chọn để nhập)</option>
-          <option value="done">🌟 Hoàn thiện 100% (Đã duyệt B & Đủ biến chính)</option>
-          <option value="verify_b">🧐 Đã nhập B — Chờ Trang kiểm duyệt</option>
-          <option value="wait_ctg">⏳ Đã nhập LS — Chờ đọc CTG (B)</option>
-          <option value="wait_ls">🆕 Mới duyệt — Chờ bạn nhập LS</option>
-          <option value="miss_ls">📝 Đã có CTG — Còn thiếu biến LS</option>
-          <option value="paper_found">📄 Ca phát hiện qua rút HS giấy (BS ghi nhầm Nhóm I)</option>
-          <option value="hi_risk">⚠️ CTG Nguy cơ cao (HIGH_RISK / B18 = 1)</option>
-          <option value="qa_10">🎲 Nhóm 10% kiểm tra chéo (QA)</option>
+          <option value="wait_ls">🆕 Mới duyệt — Chờ nhập</option>
+          <option value="miss_ls">📝 Còn thiếu biến lâm sàng</option>
+          <option value="wait_ctg">⏳ Đã nhập LS — Chờ ảnh/đọc CTG (B)</option>
+          <option value="done">🌟 Đã hoàn thiện</option>
+          <option value="verify_b" class="admin-only">🧐 Đã nhập B — Chờ Trang kiểm duyệt</option>
+          <option value="paper_found" class="admin-only">📄 Ca phát hiện qua rút HS giấy (BS ghi nhầm Nhóm I)</option>
+          <option value="hi_risk" class="admin-only">⚠️ CTG Nguy cơ cao (HIGH_RISK / B18 = 1)</option>
+          <option value="qa_10" class="admin-only">🎲 Nhóm 10% kiểm tra chéo (QA)</option>
         </select>
       </div>
 
@@ -965,8 +961,8 @@ function doPost(e) {
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:13px;align-items:center">
         <button class="ghost sm" onclick="pullFromCloud(false)">🔄 Làm mới ngay</button>
         <button class="ghost sm admin-only" onclick="pickRandom10PercentQA()">🎲 Bốc ngẫu nhiên 10% kiểm tra chéo</button>
-        <button class="ghost sm" onclick="exportSPSS_CSV()">📄 Xuất CSV (SPSS)</button>
-        <button class="ghost sm" onclick="exportBackupJSON()">💾 Sao lưu toàn bộ (Dữ liệu + Ảnh)</button>
+        <button class="ghost sm admin-only" onclick="exportSPSS_CSV()">📄 Xuất CSV (SPSS)</button>
+        <button class="ghost sm admin-only" onclick="exportBackupJSON()">💾 Sao lưu toàn bộ (Dữ liệu + Ảnh)</button>
         <button class="ghost sm admin-only" onclick="document.getElementById('mergeInput').click()">🤝 Gộp file từ máy bạn</button>
         <button class="danger sm admin-only" onclick="clearAllData()">🗑️ Xóa toàn bộ</button>
       </div>
@@ -979,8 +975,7 @@ function doPost(e) {
     <div class="card">
       <div class="card-hd">
         <div>
-          <h2>🔍 Phễu Sàng lọc HSBA & Bắt sót ca "BS ghi nhầm Nhóm I"</h2>
-          <div class="hint">Nạp danh sách sinh đủ tháng có chuyển dạ từ Excel BV → Phân luồng tự động: <b>BS ghi Nhóm II</b> (duyệt ngay) · <b>BS ghi Nhóm I + Có nguy cơ</b> (gom danh sách rút HS giấy)</div>
+          <h2>🔍 Lọc thô HSBA</h2>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="admin-only" onclick="openBulkImportModal()">📥 Nhập từ Excel / Dán hàng loạt HSBA</button>
@@ -1037,7 +1032,6 @@ function doPost(e) {
       <div class="card-hd">
         <div>
           <h2>🔀 Số liệu Lưu đồ chọn mẫu (STROBE Flow Diagram)</h2>
-          <div class="hint">Tự động bảo toàn & thống kê toàn bộ ca từ sàng lọc thô đến mẫu nghiên cứu cuối cùng</div>
         </div>
         <button class="ghost sm" onclick="copyStrobeSummary()">📋 Sao chép số liệu vẽ Lưu đồ</button>
       </div>
@@ -1049,7 +1043,6 @@ function doPost(e) {
       <div class="card-hd">
         <div>
           <h2>📊 Tiến độ Cỡ mẫu & Chỉ số Nghiên cứu (BI Analytics)</h2>
-          <div class="hint">Theo dõi tiến độ cỡ mẫu theo thời gian thực · Lát cắt chéo bất kỳ 2 biến số · Tự tính Chi-square (χ²), p-value, OR (95% CI) & Biểu đồ</div>
         </div>
         <button class="ghost sm" onclick="exportFullExcel()">📗 Xuất toàn bộ sang Excel / SPSS</button>
       </div>
@@ -1133,86 +1126,79 @@ function doPost(e) {
 <div class="backdrop" id="guideModal" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal-box md-box">
     <div class="modal-top">
-      <h3>📖 Hướng dẫn Sử dụng App — TRANG ĐOÀN (KLTN CTG Nhóm II)</h3>
+      <h3 id="guideModalTitle">📖 Hướng dẫn Nhập liệu — TRANG ĐOÀN</h3>
       <button class="ghost sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="document.getElementById('guideModal').style.display='none'">✕ Đóng</button>
     </div>
-    <div class="guide-tabs">
-      <button class="guide-tab-btn active" id="gTabBtn_collab" onclick="switchGuideTab('collab')">👩‍⚕️ 1. Dành cho Cộng sự (Nhập liệu)</button>
-      <button class="guide-tab-btn" id="gTabBtn_admin" onclick="switchGuideTab('admin')">👑 2. Dành cho Trưởng nhóm (Trang Đoàn)</button>
-      <button class="guide-tab-btn" id="gTabBtn_install" onclick="switchGuideTab('install')">📲 3. Cài ra màn hình & An toàn dữ liệu</button>
+    <div class="guide-tabs admin-only" id="guideTabsBar" style="display:none">
+      <button class="guide-tab-btn active" id="gTabBtn_admin" onclick="switchGuideTab('admin')">👑 1. Hướng dẫn Admin (Trang Đoàn)</button>
+      <button class="guide-tab-btn" id="gTabBtn_collab" onclick="switchGuideTab('collab')">👩‍⚕️ 2. Hướng dẫn Cộng sự (Nhập liệu)</button>
     </div>
     <div class="tab-body">
-      <!-- TAB 1: CỘNG SỰ -->
+      <!-- TAB 1: CỘNG SỰ (Cộng sự chỉ thấy phần này, Admin cũng xem được để đối chiếu) -->
       <div class="guide-pane active" id="gPane_collab">
         <div class="guide-step">
           <h4>Bước 1: Nhập tên của bạn để tránh làm trùng ca</h4>
-          <p>Bấm nút <b>"⚙️ Tên & Cài đặt"</b> ở góc trên cùng bên phải → gõ tên của bạn (VD: <i>Mai, Lan, Hùng...</i>) → bấm <b>"💾 Lưu tên của tôi"</b>. Khi bạn mở một bệnh án để nhập, màn hình của các bạn khác sẽ tự động hiện nhãn <b>🔒 Tên bạn đang nhập</b> để mọi người né ca đó ra.</p>
+          <p>Bấm nút <b>"👤 Tên của tôi"</b> ở góc trên cùng bên phải → gõ tên của bạn (VD: <i>Mai, Lan, Hùng...</i>) → bấm <b>"💾 Lưu tên của tôi"</b>. Khi bạn mở một bệnh án để nhập, màn hình của các bạn khác sẽ tự động hiện nhãn <b>🔒 Tên bạn đang nhập</b> để mọi người tránh chọn trùng ca đó.</p>
         </div>
         <div class="guide-step">
-          <h4>Bước 2: Chọn ca đang rảnh trong mục "📚 1. Hồ sơ đã duyệt"</h4>
+          <h4>Bước 2: Chọn ca đang rảnh để nhập liệu</h4>
           <ul>
             <li>Ở ô lọc trạng thái, chọn <b>"🆓 Ca đang rảnh (Chưa ai mở & Chưa xong)"</b> hoặc tìm các dòng có nhãn <b>🆕 Mới duyệt — Chờ nhập</b>.</li>
-            <li><b>Tuyệt đối không mở</b> các dòng đang có nhãn <b>🔒 [Tên bạn khác] đang nhập</b> hoặc <b>🔐 Đã chốt</b> (chế độ chỉ đọc).</li>
+            <li><b>Không mở</b> các dòng đang có nhãn <b>🔒 [Tên bạn khác] đang nhập</b> hoặc <b>🔐 Đã chốt</b> (chế độ chỉ đọc).</li>
           </ul>
         </div>
         <div class="guide-step">
           <h4>Bước 3: Nhập 7 phần A – G & Chụp ảnh CTG</h4>
           <ul>
-            <li>Các ô có <b>nền vàng nhạt</b> là biến số bắt buộc của đề tài. Tuổi mẹ (A1), BMI (A7), Nhóm tuổi thai (D3), Thời gian 30p (F11) sẽ tự động tính toán.</li>
-            <li><b>Nếu chụp/up ảnh CTG:</b> Sang tab <b>B. CTG</b> → bấm <b>"📷 Chụp / Chọn ảnh CTG"</b> (đoạn ghi ≥ 30 phút rõ nét) → hệ thống hỗ trợ trích xuất thông số ban đầu (nhãn <b>✨ Gợi ý tự động</b>) → kiểm tra lại, sửa chỗ chưa đúng rồi bấm <b>"💾 Lưu & Đồng bộ nhóm"</b>.</li>
+            <li>Các ô có <b>nền vàng nhạt</b> là biến số bắt buộc. Tuổi mẹ (A1), BMI (A7), Nhóm tuổi thai (D3), Thời gian 30p (F11) sẽ tự động tính toán.</li>
+            <li><b>Nếu chụp/up ảnh CTG:</b> Sang tab <b>B. CTG</b> → bấm <b>"📷 Chụp / Chọn ảnh CTG"</b> (đoạn ghi ≥ 30 phút rõ nét) → hệ thống điền gợi ý thông số ban đầu → kiểm tra lại, sửa chỗ chưa đúng rồi bấm <b>"💾 Lưu & Đồng bộ nhóm"</b>.</li>
           </ul>
         </div>
         <div class="guide-step">
-          <h4>Bước 4: Nếu không có mạng ở phòng lưu trữ HSBA</h4>
-          <p>Bạn cứ nhập và bấm <b>"💾 Lưu & Đồng bộ nhóm"</b> bình thường. App tự lưu an toàn trên điện thoại của bạn (hiện thông báo màu cam <i>Offline</i>) và sẽ tự động đẩy lên kho chung của nhóm ngay khi điện thoại có Wi-Fi / 4G trở lại.</p>
+          <h4>Bước 4: Khi không có mạng (Offline)</h4>
+          <p>Bạn cứ nhập và bấm <b>"💾 Lưu & Đồng bộ nhóm"</b> bình thường. App tự lưu an toàn trên điện thoại của bạn và sẽ tự động đồng bộ lên kho chung của nhóm ngay khi có Wi-Fi / 4G trở lại.</p>
+        </div>
+        <div class="guide-step">
+          <h4>Bước 5: Cài app ra màn hình chính điện thoại (Làm 1 lần)</h4>
+          <ul>
+            <li><b>Trên iPhone / iPad (Safari):</b> Mở link bằng <b>Safari</b> → bấm nút <b>Chia sẻ</b> (ô vuông có mũi tên lên ở dưới cùng) → chọn <b>"Thêm vào MH chính" (Add to Home Screen)</b> → bấm <b>Thêm</b>.</li>
+            <li><b>Trên Android (Chrome):</b> Mở link bằng <b>Chrome</b> → bấm nút <b>3 chấm (⋮)</b> góc trên phải → chọn <b>"Thêm vào màn hình chính"</b> / <b>"Cài đặt ứng dụng"</b>.</li>
+          </ul>
         </div>
       </div>
 
-      <!-- TAB 2: TRƯỞNG NHÓM -->
+      <!-- TAB 2: TRƯỞNG NHÓM (Chỉ Admin mới xem được) -->
       <div class="guide-pane" id="gPane_admin">
         <div class="guide-step">
-          <h4>1. Mở khóa quyền Admin (TRANG ĐOÀN)</h4>
-          <p>Bấm nút <b>"👤 Cộng sự (Nhập liệu)"</b> ở góc trên cùng → nhập Mã PIN (mặc định: <b>2025</b>, có thể đổi trong phần Cài đặt). Khi mở khóa, nút sẽ chuyển sang màu vàng <b>👑 Admin: TRANG ĐOÀN</b>.</p>
+          <h4>1. Cấu hình API Key, Google Apps Script & Gửi link mời Cộng sự</h4>
+          <ul>
+            <li>Vào <b>"⚙️ Cấu hình Admin"</b> → dán <b>Gemini API Key</b> và <b>Link Google Apps Script (/exec)</b> → bấm <b>"💾 Lưu toàn bộ cấu hình Admin"</b>.</li>
+            <li>Bấm <b>"🔗 Sao chép link mời Cộng sự"</b> để gửi vào nhóm Zalo/Messenger. Link này tự động gắn sẵn API Key & Link Script để các bạn bấm vào là dùng được ngay, nhưng <b>không kèm mã PIN Admin</b> nên cộng sự chỉ ở giao diện nhập liệu gọn nhẹ.</li>
+          </ul>
         </div>
         <div class="guide-step">
-          <h4>2. Nạp danh sách HSBA & Bắt sót ca "BS ghi nhầm Nhóm I"</h4>
+          <h4>2. Lọc thô HSBA & Bắt sót ca "BS ghi nhầm Nhóm I"</h4>
           <ul>
-            <li>Vào tab <b>"🔍 2. Phễu Sàng lọc & Rút HS giấy"</b> → bấm <b>"📥 Nhập từ Excel / Dán hàng loạt HSBA"</b> để nạp danh sách sinh đủ tháng có chuyển dạ.</li>
-            <li>Khi tra HSBA điện tử: nếu BS ghi <i>CTG Nhóm I</i> nhưng sản phụ <b>có yếu tố nguy cơ</b> (TSG, FGR, thiểu ối, ĐTĐTK, Oxytocin, ối xanh...), hãy chọn <b>Có nguy cơ</b> và bấm <b>"📄 Chờ rút HS giấy"</b> để gom danh sách mượn hồ sơ giấy xem lại băng ghi thực tế.</li>
-            <li>Ca không đạt tiêu chuẩn chọn mẫu phải bấm <b>"❌ Loại ca này"</b> (không xóa) để app tự động tổng hợp số liệu vẽ <b>Lưu đồ STROBE</b>.</li>
+            <li>Vào tab <b>"🔍 2. Lọc thô HSBA & Rút HS giấy"</b> → bấm <b>"📥 Nhập từ Excel / Dán hàng loạt HSBA"</b>.</li>
+            <li>Khi tra HSBA điện tử: nếu BS ghi <i>CTG Nhóm I</i> nhưng sản phụ <b>có yếu tố nguy cơ</b> (TSG, FGR, thiểu ối, ĐTĐTK, Oxytocin, ối xanh...), chọn <b>Có nguy cơ</b> và bấm <b>"📄 Chờ rút HS giấy"</b> để gom danh sách mượn hồ sơ giấy xem lại băng ghi thực tế.</li>
+            <li>Ca không đạt tiêu chuẩn chọn mẫu bấm <b>"❌ Loại ca này"</b> (không xóa) để app tự tổng hợp số liệu vẽ <b>Lưu đồ STROBE</b>.</li>
           </ul>
         </div>
         <div class="guide-step">
           <h4>3. Duyệt chuẩn Phần B, Chốt khóa hồ sơ & Kiểm tra chéo 10%</h4>
           <ul>
             <li>Lọc các ca <b>"🧐 Đã nhập B — Chờ Trang kiểm duyệt"</b> → mở tab B đối chiếu ảnh CTG → tích ô <b>"✅ Trưởng nhóm đã đối chiếu..."</b> và tích <b>"🔐 Chốt khóa hồ sơ"</b> ở góc dưới trước khi Lưu để cộng sự không sửa nhầm.</li>
-            <li>Bấm nút <b>"🎲 Bốc ngẫu nhiên 10% kiểm tra chéo"</b> ở cuối bảng để chọn ngẫu nhiên 10% mẫu phục vụ thẩm định chất lượng số liệu.</li>
+            <li>Bấm <b>"🎲 Bốc ngẫu nhiên 10% kiểm tra chéo"</b> ở cuối bảng để chọn ngẫu nhiên 10% mẫu thẩm định chất lượng số liệu.</li>
           </ul>
         </div>
         <div class="guide-step">
           <h4>4. Xem BI Analytics & Xuất file SPSS</h4>
-          <p>Vào tab <b>"📊 3. BI Dashboard & Lưu đồ STROBE"</b> để lấy số liệu vẽ lưu đồ STROBE, chạy bảng chéo tính <b>χ², p-value, OR (95% CI)</b> và tải biểu đồ. Bấm <b>"📗 Xuất Excel (.xlsx)"</b> để tải file gồm 5 sheet (đã có sẵn sheet <code>Code_SPSS_Syntax</code> dán thẳng vào SPSS).</p>
-        </div>
-      </div>
-
-      <!-- TAB 3: CÀI APP & CẬP NHẬT -->
-      <div class="guide-pane" id="gPane_install">
-        <div class="guide-step">
-          <h4>📲 Cách cài app ra màn hình chính (Chỉ làm 1 lần duy nhất)</h4>
-          <ul>
-            <li><b>Trên iPhone / iPad (Dùng Safari):</b> Mở đường link nhóm gửi bằng trình duyệt <b>Safari</b> → bấm nút <b>Chia sẻ</b> (biểu tượng ô vuông có mũi tên chỉ lên ở thanh dưới cùng) → kéo xuống chọn <b>"Thêm vào MH chính" (Add to Home Screen)</b> → bấm <b>Thêm</b>.</li>
-            <li><b>Trên điện thoại Android (Dùng Chrome):</b> Mở đường link nhóm gửi bằng trình duyệt <b>Chrome</b> → bấm nút <b>3 chấm (⋮)</b> ở góc trên cùng bên phải → chọn <b>"Cài đặt ứng dụng"</b> hoặc <b>"Thêm vào màn hình chính"</b> → bấm <b>Cài đặt / Thêm</b>.</li>
-            <li>Từ lần sau, biểu tượng <b>📋 TRANG ĐOÀN</b> sẽ nằm sẵn ngoài màn hình điện thoại như app thật, bấm vào là mở toàn màn hình và làm tiếp ngay!</li>
-          </ul>
-        </div>
-        <div class="guide-step">
-          <h4>🛡️ Tại sao cập nhật tính năng mới không làm mất dữ liệu?</h4>
-          <p>Toàn bộ số liệu của nhóm được lưu độc lập trên <b>Google Sheets + Google Drive</b> của Trang và bộ nhớ trình duyệt theo tên miền cố định. Khi Trang cập nhật giao diện/tính năng mới lên cùng 1 đường link đó, các bạn chỉ cần mở lại biểu tượng ngoài màn hình chính là tự động dùng bản mới nhất mà <b>giữ nguyên 100% dữ liệu và cài đặt cũ</b>.</p>
+          <p>Vào tab <b>"📊 3. BI Dashboard & Lưu đồ STROBE"</b> để lấy số liệu vẽ lưu đồ STROBE, chạy bảng chéo tính <b>χ², p-value, OR (95% CI)</b> và tải biểu đồ. Bấm <b>"📗 Xuất Excel (.xlsx)"</b> để tải file 5 sheet (có sẵn <code>Code_SPSS_Syntax</code> dán thẳng vào SPSS).</p>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <span class="hint">Phiên bản v8.0 · Đề tài KLTN CTG Nhóm II — ACOG 2025</span>
+      <span class="hint">TRANG ĐOÀN · KLTN CTG Nhóm II</span>
       <button class="ok" onclick="document.getElementById('guideModal').style.display='none'">Đã hiểu, đóng hướng dẫn</button>
     </div>
   </div>
@@ -1352,7 +1338,6 @@ function doPost(e) {
     <div class="modal-top">
       <div>
         <h3 id="edHeaderTitle">Phiếu thu thập số liệu lâm sàng</h3>
-        <div style="font-size:12.5px;opacity:0.88" id="edHeaderSub">Chuẩn Bảng 2.1 + Biến mở rộng dự phòng · Tự động tính tuổi, BMI, AFI, thời gian 30p & ACOG 2025</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <span id="edStatusBadge"></span>
@@ -1395,7 +1380,7 @@ function doPost(e) {
           </div>
         </div>
 
-        <div class="verify-bar" id="verifyBarB">
+        <div class="verify-bar admin-only" id="verifyBarB" style="display:none">
           <label class="verify-label">
             <input type="checkbox" id="chkVerifyB" onchange="onVerifyBChange()">
             <span>✅ Trưởng nhóm (TRANG ĐOÀN) đã đối chiếu băng CTG giấy & duyệt chuẩn Phần B</span>
@@ -1631,58 +1616,96 @@ function getAdminPin() {
 
 function toggleAdminAuth() {
   if (isAdminUnlocked) {
-    if (confirm('Khóa lại chế độ Cộng sự (ẩn quyền Admin)?')) {
+    if (confirm('Khóa lại chế độ Admin và quay về giao diện Cộng sự?')) {
       isAdminUnlocked = false;
       sessionStorage.removeItem('trang_admin_unlocked');
+      switchMode('study');
       applyRolePermissionsUI();
       renderAllViews();
-      showToast('🔒 Đã chuyển về chế độ Cộng sự');
+      showToast('🔒 Đã chuyển về giao diện Cộng sự');
     }
     return;
   }
-  const entered = prompt('👑 Nhập Mã PIN Trưởng nhóm (TRANG ĐOÀN) để mở khóa toàn quyền (Mặc định: 2025):');
+  const entered = prompt('👑 Nhập Mã PIN Admin (TRANG ĐOÀN) để mở khóa (Mặc định: 2025):');
   if (entered === null) return;
   if (entered.trim() === getAdminPin()) {
     isAdminUnlocked = true;
     sessionStorage.setItem('trang_admin_unlocked', '1');
     applyRolePermissionsUI();
     renderAllViews();
-    showToast('👑 Đã mở khóa toàn quyền Admin: TRANG ĐOÀN!');
+    showToast('👑 Đã mở khóa giao diện Admin: TRANG ĐOÀN!');
   } else {
-    alert('❌ Sai mã PIN! Bạn vẫn đang ở chế độ Cộng sự (chỉ nhập liệu các ca đã duyệt).');
+    alert('❌ Sai mã PIN!');
   }
 }
 
 function applyRolePermissionsUI() {
   const roleBtn = document.getElementById('rolePillBtn');
+  const headerEl = document.getElementById('mainHeader');
   if (isAdminUnlocked) {
     roleBtn.textContent = '👑 Admin: TRANG ĐOÀN';
     roleBtn.classList.add('admin-active');
+    if (headerEl) headerEl.classList.add('admin-mode');
   } else {
-    roleBtn.textContent = '👤 Cộng sự (Nhập liệu)';
+    roleBtn.textContent = '🔒';
     roleBtn.classList.remove('admin-active');
+    if (headerEl) headerEl.classList.remove('admin-mode');
+    if (document.getElementById('view_study').style.display === 'none') {
+      switchMode('study');
+    }
   }
 
   document.querySelectorAll('.admin-only').forEach(el => {
     el.style.display = isAdminUnlocked ? '' : 'none';
   });
 
-  document.getElementById('adminLockedNotice').style.display = isAdminUnlocked ? 'none' : 'block';
+  const setTitle = document.getElementById('settingsCardTitle');
+  if (setTitle) setTitle.textContent = isAdminUnlocked ? '👑 Cấu hình Admin, API Key & Link Đồng bộ (TRANG ĐOÀN)' : '👤 Tên người nhập liệu';
+
+  const collabFooter = document.getElementById('collabAdminHintFooter');
+  if (collabFooter) collabFooter.style.display = isAdminUnlocked ? 'none' : 'block';
+
   document.getElementById('adminSettingsSection').style.display = isAdminUnlocked ? 'block' : 'none';
-  document.getElementById('collabStudyNotice').style.display = isAdminUnlocked ? 'none' : 'block';
-  document.getElementById('collabScreenNotice').style.display = isAdminUnlocked ? 'none' : 'block';
+
+  const studyTitle = document.getElementById('studyCardTitle');
+  const studyHint = document.getElementById('studyCardHint');
+  if (studyTitle) studyTitle.textContent = isAdminUnlocked ? '📊 Hồ sơ đã duyệt (Quản lý & Kiểm duyệt)' : '📋 Danh sách Hồ sơ nhập liệu';
+  if (studyHint) {
+    studyHint.innerHTML = isAdminUnlocked
+      ? 'Tự động đồng bộ mỗi 15 giây & ngay khi bấm <b>Lưu</b>. Ca có nhãn <b>🔒 Tên bạn</b> nghĩa là bạn đó đang mở nhập.'
+      : 'Chọn các ca có nhãn <b>🆕 Mới duyệt — Chờ nhập</b> (không có khóa 🔒) để nhập biến số. Ca có nhãn <b>🔒 Tên bạn</b> nghĩa là bạn đó đang mở — hãy chọn ca khác!';
+  }
+
+  const fltSel = document.getElementById('studyFilter');
+  if (fltSel && !isAdminUnlocked && ['verify_b', 'paper_found', 'hi_risk', 'qa_10'].includes(fltSel.value)) {
+    fltSel.value = 'all';
+  }
+  updateTopHeaderUI();
 }
 
 // ================= 3. MODAL HƯỚNG DẪN & HỘP THOẠI XÁC NHẬN XÓA =================
 function openGuideModal() {
-  switchGuideTab(isAdminUnlocked ? 'admin' : 'collab');
+  const titleEl = document.getElementById('guideModalTitle');
+  const tabsBar = document.getElementById('guideTabsBar');
+  if (isAdminUnlocked) {
+    if (titleEl) titleEl.textContent = '📖 Hướng dẫn Sử dụng App (Admin & Cộng sự) — TRANG ĐOÀN';
+    if (tabsBar) tabsBar.style.display = 'flex';
+    switchGuideTab('admin');
+  } else {
+    if (titleEl) titleEl.textContent = '📖 Hướng dẫn Nhập liệu — TRANG ĐOÀN';
+    if (tabsBar) tabsBar.style.display = 'none';
+    switchGuideTab('collab');
+  }
   document.getElementById('guideModal').style.display = 'block';
 }
 
 function switchGuideTab(tabName) {
-  ['collab', 'admin', 'install'].forEach(t => {
-    document.getElementById('gTabBtn_' + t).classList.toggle('active', t === tabName);
-    document.getElementById('gPane_' + t).classList.toggle('active', t === tabName);
+  if (!isAdminUnlocked && tabName === 'admin') tabName = 'collab';
+  ['collab', 'admin'].forEach(t => {
+    const btn = document.getElementById('gTabBtn_' + t);
+    const pane = document.getElementById('gPane_' + t);
+    if (btn) btn.classList.toggle('active', t === tabName);
+    if (pane) pane.classList.toggle('active', t === tabName);
   });
 }
 
@@ -2079,7 +2102,12 @@ function toggleSettings() {
 function updateTopHeaderUI() {
   const user = localStorage.getItem('ctg_user_name');
   const syncUrl = localStorage.getItem('ctg_sync_url');
-  document.getElementById('aiStatusPill').textContent = `⚙️ ${user || 'Đặt tên'} · Cài đặt`;
+  const pill = document.getElementById('aiStatusPill');
+  if (pill) {
+    pill.textContent = isAdminUnlocked
+      ? `⚙️ ${user || 'Trang'} · Cấu hình Admin`
+      : `👤 ${user || 'Đặt tên của tôi'}`;
+  }
   if (!syncUrl) setSyncStatus('none', 'Chưa gắn link nhóm');
   else setSyncStatus('ok', 'Tự động đồng bộ bật');
 }
@@ -2711,14 +2739,22 @@ function renderStudyTable() {
     if (!lock && !c.okLS && !rec.final_locked) freeCnt++;
   });
 
-  document.getElementById('studyStatsBar').innerHTML = `
-    <div class="stat-box" onclick="setStudyFilter('all')"><div class="num">${approvedList.length}</div><div class="lbl">Tổng ca đã duyệt</div></div>
-    <div class="stat-box" onclick="setStudyFilter('free_to_claim')"><div class="num" style="color:#0284c7">${freeCnt}</div><div class="lbl">🆓 Ca rảnh chưa ai nhập</div></div>
-    <div class="stat-box" onclick="setStudyFilter('done')"><div class="num" style="color:var(--ok)">${done}</div><div class="lbl">🌟 Hoàn thiện 100%</div></div>
-    <div class="stat-box" onclick="setStudyFilter('verify_b')"><div class="num" style="color:#ca8a04">${verifyB}</div><div class="lbl">🧐 Chờ Trang duyệt B</div></div>
-    <div class="stat-box" onclick="setStudyFilter('paper_found')"><div class="num" style="color:#c2410c">${paperFoundCnt}</div><div class="lbl">📄 Bắt sót qua HS giấy</div></div>
-    <div class="stat-box" onclick="setStudyFilter('hi_risk')"><div class="num" style="color:var(--bad)">${hiRisk}</div><div class="lbl">⚠️ CTG Nguy cơ cao</div></div>
-  `;
+  if (isAdminUnlocked) {
+    document.getElementById('studyStatsBar').innerHTML = `
+      <div class="stat-box" onclick="setStudyFilter('all')"><div class="num">${approvedList.length}</div><div class="lbl">Tổng ca đã duyệt</div></div>
+      <div class="stat-box" onclick="setStudyFilter('free_to_claim')"><div class="num" style="color:#0284c7">${freeCnt}</div><div class="lbl">🆓 Ca rảnh chưa ai nhập</div></div>
+      <div class="stat-box" onclick="setStudyFilter('done')"><div class="num" style="color:var(--ok)">${done}</div><div class="lbl">🌟 Hoàn thiện 100%</div></div>
+      <div class="stat-box" onclick="setStudyFilter('verify_b')"><div class="num" style="color:#ca8a04">${verifyB}</div><div class="lbl">🧐 Chờ Trang duyệt B</div></div>
+      <div class="stat-box" onclick="setStudyFilter('paper_found')"><div class="num" style="color:#c2410c">${paperFoundCnt}</div><div class="lbl">📄 Bắt sót qua HS giấy</div></div>
+      <div class="stat-box" onclick="setStudyFilter('hi_risk')"><div class="num" style="color:var(--bad)">${hiRisk}</div><div class="lbl">⚠️ CTG Nguy cơ cao</div></div>
+    `;
+  } else {
+    document.getElementById('studyStatsBar').innerHTML = `
+      <div class="stat-box" onclick="setStudyFilter('all')"><div class="num">${approvedList.length}</div><div class="lbl">Tổng hồ sơ nhóm</div></div>
+      <div class="stat-box" onclick="setStudyFilter('free_to_claim')"><div class="num" style="color:#0284c7">${freeCnt}</div><div class="lbl">🆓 Ca đang rảnh (Chọn để nhập)</div></div>
+      <div class="stat-box" onclick="setStudyFilter('done')"><div class="num" style="color:var(--ok)">${done + verifyB}</div><div class="lbl">✅ Ca đã nhập xong</div></div>
+    `;
+  }
 
   const q = (document.getElementById('studySearch').value || '').trim().toLowerCase();
   const flt = document.getElementById('studyFilter').value;
@@ -2758,7 +2794,9 @@ function renderStudyTable() {
     const hasImg = Boolean(rec.imgDataUrl || rec.imgDriveUrl);
 
     const ctgInfo = comp.okB
-      ? `NTT: <b>${r.B1}</b> · DĐNT: <b>${r.B3}</b> · ${d.B18 === 1 ? '<span class="badge bHi">B18=1</span>' : '<span class="badge bOk">B18=0</span>'} ${rec.ctg_verified ? '✅' : '🧐'}`
+      ? (isAdminUnlocked
+          ? `NTT: <b>${r.B1}</b> · DĐNT: <b>${r.B3}</b> · ${d.B18 === 1 ? '<span class="badge bHi">B18=1</span>' : '<span class="badge bOk">B18=0</span>'} ${rec.ctg_verified ? '✅' : '🧐'}`
+          : `NTT: <b>${r.B1}</b> · DĐNT: <b>${r.B3}</b> · <span class="badge bOk">Đã nhập B</span>`)
       : `<span style="color:var(--mut)">Thiếu ${comp.missingBySec.B.length} biến B</span>`;
 
     const imgBtn = hasImg
@@ -2769,16 +2807,20 @@ function renderStudyTable() {
       ? `<div style="margin-top:3px"><span class="badge bLock">🔒 ${esc(lock.user)} đang nhập (${lock.minsAgo === 0 ? 'vừa mở' : lock.minsAgo + 'p trước'})</span></div>`
       : '';
 
-    const finalBadge = rec.final_locked ? `<span class="badge bFinal" title="Đã khóa chốt bởi Admin">🔐 Đã chốt</span> ` : '';
-    const paperTag = rec.found_via_paper ? `<span class="badge bPaper" title="Phát hiện Nhóm II qua rút HS giấy">📄 HS giấy</span> ` : '';
+    const finalBadge = rec.final_locked ? `<span class="badge bFinal" title="Đã khóa chốt">🔐 Đã chốt</span> ` : '';
+    const paperTag = (isAdminUnlocked && rec.found_via_paper) ? `<span class="badge bPaper" title="Phát hiện Nhóm II qua rút HS giấy">📄 HS giấy</span> ` : '';
+    const qaTag = (isAdminUnlocked && rec.qa_10pct) ? '<span class="badge bQa">QA 10%</span>' : '';
+    const displayStatusBadge = (!isAdminUnlocked && comp.code === 'verify_b')
+      ? `<span class="badge bDone">✅ Đã nhập CTG</span>`
+      : `<span class="badge ${comp.badgeClass}">${comp.label}</span>`;
 
     return `<tr class="case-row ${lock ? 'case-locked' : ''}" onclick="openExistingCase('${rec.uid}','A')">
       <td>
-        <div style="font-weight:800;color:var(--pri-dark)">${esc(r.ma_hsba || '(Chưa mã HSBA)')} ${finalBadge}${paperTag}${rec.qa_10pct ? '<span class="badge bQa">QA 10%</span>' : ''}</div>
+        <div style="font-weight:800;color:var(--pri-dark)">${esc(r.ma_hsba || '(Chưa mã HSBA)')} ${finalBadge}${paperTag}${qaTag}</div>
         <div style="font-size:12.5px;color:var(--mut)"><b>${esc(r.ma_nc || '')}</b> ${r.ho_ten ? '· ' + esc(r.ho_ten) : ''}</div>
       </td>
       <td>
-        <span class="badge ${comp.badgeClass}">${comp.label}</span>
+        ${displayStatusBadge}
         ${lockHtml}
         ${comp.allMissing.length ? `<div style="font-size:12px;color:var(--mut);margin-top:2px">Thiếu: ${comp.allMissing.slice(0, 4).join(', ')}${comp.allMissing.length > 4 ? '...' : ''}</div>` : ''}
       </td>
