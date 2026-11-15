@@ -703,7 +703,7 @@
 <header id="mainHeader">
   <div class="header-inner">
     <div>
-      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.5</span></h1>
+      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.6</span></h1>
     </div>
     <div class="header-actions">
       <span class="sync-pill" id="liveSyncPill" onclick="onSyncPillClick()" style="cursor:pointer" title="Bấm để gắn link nhóm hoặc đồng bộ ngay">⚪ Chưa gắn link nhóm</span>
@@ -781,10 +781,10 @@
         <a href="https://aistudio.google.com/apikey" target="_blank" style="font-size:13.5px;color:var(--pri);font-weight:700;align-self:center;text-decoration:none">🔑 Lấy Gemini API Key ↗</a>
       </div>
       <details style="margin-top:12px">
-        <summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--pri-dark)">☁️ Mã Google Apps Script V4.0 (Chuẩn tên biến SPSS 142 cột + Tự đổi tên cột cũ)</summary>
+        <summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--pri-dark)">☁️ Mã Google Apps Script V4.1 (Chuẩn tên biến SPSS 142 cột + Tự đổi tên cột cũ)</summary>
         <div class="hint" style="margin-top:6px;line-height:1.55">
-          Tạo Google Sheet mới → <b>Tiện ích mở rộng → Apps Script</b> → dán toàn bộ mã V4.0 (chuẩn tên biến SPSS) dưới đây → <b>Triển khai → Quản lý các lần triển khai → Chỉnh sửa → Phiên bản mới → Triển khai</b> (Quyền truy cập: <b>Bất kỳ ai / Anyone</b>):
-          <div style="margin-top:6px"><button class="ghost sm" onclick="copyAppsScriptCode()">📋 Sao chép nhanh mã Apps Script V4.0 (SPSS)</button></div>
+          Tạo Google Sheet mới → <b>Tiện ích mở rộng → Apps Script</b> → dán toàn bộ mã V4.1 (chuẩn tên biến SPSS) dưới đây → <b>Triển khai → Quản lý các lần triển khai → Chỉnh sửa → Phiên bản mới → Triển khai</b> (Quyền truy cập: <b>Bất kỳ ai / Anyone</b>):
+          <div style="margin-top:6px"><button class="ghost sm" onclick="copyAppsScriptCode()">📋 Sao chép nhanh mã Apps Script V4.1 (SPSS)</button></div>
           <pre class="code-box" id="appsScriptBox">var RENAME_MAP = {
   &quot;uid&quot;: &quot;SYS_UID&quot;,
   &quot;ma_nc&quot;: &quot;ID_MaNghienCuu&quot;,
@@ -946,13 +946,19 @@ var REVERSE_RENAME_MAP = (function() {
 
 var PREFERRED_HEADER_ORDER = Object.keys(RENAME_MAP).map(function(k) { return RENAME_MAP[k]; });
 
-function doiTenCotSangChuanSPSS() {
+function xoaCaseChuaDuyetTrongSheet() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sheet.getLastRow() &lt;= 1) return;
   renameOldHeadersToSpss_(sheet);
-  if (sheet.getLastRow() &gt;= 1) {
-    var headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
-    headerRange.setFontWeight(&quot;bold&quot;).setBackground(&quot;#e8f0fe&quot;);
-    sheet.setFrozenRows(1);
+  var allData = sheet.getDataRange().getValues();
+  var headers = allData[0];
+  var statusCol = headers.indexOf(&quot;QA_TrangThaiSangLoc&quot;);
+  if (statusCol === -1) return;
+  for (var r = allData.length - 1; r &gt;= 1; r--) {
+    var st = String(allData[r][statusCol] || &quot;&quot;).trim().toLowerCase();
+    if (st &amp;&amp; st !== &quot;approved&quot;) {
+      sheet.deleteRow(r + 1);
+    }
   }
 }
 
@@ -962,22 +968,16 @@ function renameOldHeadersToSpss_(sheet) {
   var changed = false;
   var newHeaders = headers.map(function(h) {
     var key = String(h || &quot;&quot;).trim();
-    if (RENAME_MAP[key]) {
-      changed = true;
-      return RENAME_MAP[key];
-    }
+    if (RENAME_MAP[key]) { changed = true; return RENAME_MAP[key]; }
     return key;
   });
-  if (changed) {
-    sheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
-  }
+  if (changed) sheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
 }
 
 function normalizeRowKeysToSpss_(rowObj) {
   var out = {};
   Object.keys(rowObj || {}).forEach(function(k) {
-    var mappedKey = RENAME_MAP[k] || k;
-    out[mappedKey] = rowObj[k];
+    out[RENAME_MAP[k] || k] = rowObj[k];
   });
   return out;
 }
@@ -987,16 +987,19 @@ function readAllRows_(sheet) {
   var data = sheet.getDataRange().getValues();
   if (data.length &lt;= 1) return [];
   var headers = data[0];
+  var statusCol = headers.indexOf(&quot;QA_TrangThaiSangLoc&quot;);
   var rows = [];
   for (var i = 1; i &lt; data.length; i++) {
+    if (statusCol !== -1) {
+      var st = String(data[i][statusCol] || &quot;&quot;).trim().toLowerCase();
+      if (st &amp;&amp; st !== &quot;approved&quot;) continue;
+    }
     var obj = {};
     for (var j = 0; j &lt; headers.length; j++) {
       var colName = String(headers[j] || &quot;&quot;).trim();
       if (!colName) continue;
       obj[colName] = data[i][j];
-      if (REVERSE_RENAME_MAP[colName]) {
-        obj[REVERSE_RENAME_MAP[colName]] = data[i][j];
-      }
+      if (REVERSE_RENAME_MAP[colName]) obj[REVERSE_RENAME_MAP[colName]] = data[i][j];
     }
     rows.push(obj);
   }
@@ -1022,9 +1025,7 @@ function doPost(e) {
     var action = body.action || &quot;upsert&quot;;
 
     if (action === &quot;clear_all&quot;) {
-      if (sheet.getLastRow() &gt; 1) {
-        sheet.deleteRows(2, sheet.getLastRow() - 1);
-      }
+      if (sheet.getLastRow() &gt; 1) sheet.deleteRows(2, sheet.getLastRow() - 1);
       return jsonOut_({ status: &quot;ok&quot;, serverTime: new Date().toISOString(), rows: [] });
     }
 
@@ -1076,15 +1077,47 @@ function doPost(e) {
     var rawRows = action === &quot;bulk_upsert&quot; ? (body.rows || []) : [body.row];
     var incomingRows = rawRows.map(normalizeRowKeysToSpss_);
 
-    if (body.imgBase64 &amp;&amp; incomingRows[0]) {
+    var approvedRows = [];
+    var removedUids = [];
+    var removedHsbas = [];
+    incomingRows.forEach(function(rowObj) {
+      var st = String(rowObj.QA_TrangThaiSangLoc || &quot;&quot;).trim().toLowerCase();
+      if (!st || st === &quot;approved&quot;) {
+        rowObj.QA_TrangThaiSangLoc = &quot;approved&quot;;
+        approvedRows.push(rowObj);
+      } else {
+        if (rowObj.SYS_UID) removedUids.push(String(rowObj.SYS_UID));
+        if (rowObj.ID_MaHSBA) removedHsbas.push(String(rowObj.ID_MaHSBA).trim().toLowerCase());
+      }
+    });
+
+    if ((removedUids.length || removedHsbas.length) &amp;&amp; sheet.getLastRow() &gt; 1) {
+      var delData = sheet.getDataRange().getValues();
+      var delHeaders = delData[0];
+      var dUidCol = delHeaders.indexOf(&quot;SYS_UID&quot;);
+      var dHsbaCol = delHeaders.indexOf(&quot;ID_MaHSBA&quot;);
+      for (var dr = delData.length - 1; dr &gt;= 1; dr--) {
+        var rUid = dUidCol !== -1 ? String(delData[dr][dUidCol]) : &quot;&quot;;
+        var rHsba = dHsbaCol !== -1 ? String(delData[dr][dHsbaCol]).trim().toLowerCase() : &quot;&quot;;
+        if ((rUid &amp;&amp; removedUids.indexOf(rUid) !== -1) || (rHsba &amp;&amp; removedHsbas.indexOf(rHsba) !== -1)) {
+          sheet.deleteRow(dr + 1);
+        }
+      }
+    }
+
+    if (!approvedRows.length) {
+      return jsonOut_({ status: &quot;ok&quot;, serverTime: new Date().toISOString(), rows: readAllRows_(sheet) });
+    }
+
+    if (body.imgBase64 &amp;&amp; approvedRows[0]) {
       var folder = DriveApp.getFoldersByName(&quot;CTG_ACOG2025_Images&quot;).hasNext()
         ? DriveApp.getFoldersByName(&quot;CTG_ACOG2025_Images&quot;).next()
         : DriveApp.createFolder(&quot;CTG_ACOG2025_Images&quot;);
-      var fileName = (incomingRows[0].ID_MaHSBA || incomingRows[0].ID_MaNghienCuu || &quot;CTG&quot;) + &quot;.jpg&quot;;
+      var fileName = (approvedRows[0].ID_MaHSBA || approvedRows[0].ID_MaNghienCuu || &quot;CTG&quot;) + &quot;.jpg&quot;;
       var blob = Utilities.newBlob(Utilities.base64Decode(body.imgBase64.split(&quot;,&quot;)[1]), &quot;image/jpeg&quot;, fileName);
       var file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      incomingRows[0].SYS_LinkAnhCTGDrive = file.getUrl();
+      approvedRows[0].SYS_LinkAnhCTGDrive = file.getUrl();
     }
 
     var headers = sheet.getLastRow() === 0
@@ -1092,14 +1125,12 @@ function doPost(e) {
       : sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     var headerChanged = (sheet.getLastRow() === 0);
 
-    incomingRows.forEach(function(rowObj) {
+    approvedRows.forEach(function(rowObj) {
       Object.keys(rowObj).forEach(function(k) {
         if (headers.indexOf(k) === -1) { headers.push(k); headerChanged = true; }
       });
     });
-    if (headerChanged) {
-      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    }
+    if (headerChanged) sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
     var allData = sheet.getDataRange().getValues();
     var uidCol = headers.indexOf(&quot;SYS_UID&quot;);
@@ -1111,7 +1142,7 @@ function doPost(e) {
       &quot;QA_TrangThaiNhapLieu&quot;, &quot;SYS_CapNhatLuc&quot;, &quot;SYS_NguoiSuaCuoi&quot;
     ];
 
-    incomingRows.forEach(function(rowObj) {
+    approvedRows.forEach(function(rowObj) {
       var targetRow = -1;
       var normHsba = String(rowObj.ID_MaHSBA || &quot;&quot;).trim().toLowerCase();
       for (var r = 1; r &lt; allData.length; r++) {
@@ -1507,7 +1538,7 @@ function doPost(e) {
       <span class="hint">Tự động lọc trùng mã HSBA trên toàn bộ kho nhóm</span>
       <div style="display:flex;gap:8px">
         <button class="ghost" onclick="document.getElementById('bulkModal').style.display='none'">Hủy</button>
-        <button class="ok" id="btnBulkSubmit" onclick="processBulkImport()">📥 Nạp & Đồng bộ ngay</button>
+        <button class="ok" id="btnBulkSubmit" onclick="processBulkImport()">📥 Nạp danh sách sàng lọc</button>
       </div>
     </div>
   </div>
@@ -1765,14 +1796,32 @@ function doPost(e) {
 const _memLocal = {};
 const _memSession = {};
 const safeLocal = {
-  get(k) { try { return window.safeLocal.get(k); } catch (e) { return Object.prototype.hasOwnProperty.call(_memLocal, k) ? _memLocal[k] : null; } },
-  set(k, v) { _memLocal[k] = String(v); try { window.safeLocal.set(k, String(v)); } catch (e) {} },
-  remove(k) { delete _memLocal[k]; try { window.safeLocal.remove(k); } catch (e) {} }
+  get(k) {
+    try { return window.localStorage.getItem(k); }
+    catch (e) { return Object.prototype.hasOwnProperty.call(_memLocal, k) ? _memLocal[k] : null; }
+  },
+  set(k, v) {
+    _memLocal[k] = String(v);
+    try { window.localStorage.setItem(k, String(v)); } catch (e) {}
+  },
+  remove(k) {
+    delete _memLocal[k];
+    try { window.localStorage.removeItem(k); } catch (e) {}
+  }
 };
 const safeSession = {
-  get(k) { try { return window.safeSession.get(k); } catch (e) { return Object.prototype.hasOwnProperty.call(_memSession, k) ? _memSession[k] : null; } },
-  set(k, v) { _memSession[k] = String(v); try { window.safeSession.set(k, String(v)); } catch (e) {} },
-  remove(k) { delete _memSession[k]; try { window.safeSession.remove(k); } catch (e) {} }
+  get(k) {
+    try { return window.sessionStorage.getItem(k); }
+    catch (e) { return Object.prototype.hasOwnProperty.call(_memSession, k) ? _memSession[k] : null; }
+  },
+  set(k, v) {
+    _memSession[k] = String(v);
+    try { window.sessionStorage.setItem(k, String(v)); } catch (e) {}
+  },
+  remove(k) {
+    delete _memSession[k];
+    try { window.sessionStorage.removeItem(k); } catch (e) {}
+  }
 };
 
 // ================= 1. CẤU TRÚC BIẾN SỐ ĐẦY ĐỦ (BẢNG 2.1 + PHỤ LỤC 1 + MỞ RỘNG) =================
@@ -2665,7 +2714,7 @@ function copyShareLink() {
 function copyAppsScriptCode() {
   const code = document.getElementById('appsScriptBox').textContent;
   navigator.clipboard.writeText(code)
-    .then(() => showToast('📋 Đã sao chép mã Apps Script V4.0 (Chuẩn SPSS)!'))
+    .then(() => showToast('📋 Đã sao chép mã Apps Script V4.1 (Chuẩn SPSS)!'))
     .catch(() => alert('Hãy bôi đen và copy đoạn mã trong khung.'));
 }
 
@@ -2978,6 +3027,7 @@ async function postToCloudAndSync(payload, offlineUidToQueue) {
 }
 
 async function pushRecordToCloud(rec) {
+  if (!rec || rec.screen_status !== 'approved') return;
   const flatRow = buildCloudFlatRow(rec);
   const ok = await postToCloudAndSync({ action: 'upsert', row: flatRow, imgBase64: rec.imgDataUrl || '' }, rec.uid);
   if (ok) showToast('☁️ Đã lưu & đồng bộ tự động cho cả nhóm!');
@@ -3121,12 +3171,11 @@ async function processBulkImport() {
   if (!raw) return;
   const btn = document.getElementById('btnBulkSubmit');
   btn.disabled = true;
-  btn.textContent = '⏳ Đang nạp & đồng bộ...';
+  btn.textContent = '⏳ Đang nạp danh sách...';
 
   try {
     const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     let added = 0, skipped = 0, autoRiskDetected = 0;
-    const newRecords = [];
 
     for (const line of lines) {
       const parts = line.split(/[\t;]+/).map(s => s.trim());
@@ -3162,21 +3211,15 @@ async function processBulkImport() {
       };
       await dbPut(rec);
       records.push(rec);
-      newRecords.push(rec);
       added++;
     }
 
     document.getElementById('bulkModal').style.display = 'none';
     renderAllViews();
-
-    if (newRecords.length > 0 && safeLocal.get('ctg_sync_url')) {
-      const flatRows = newRecords.map(buildCloudFlatRow);
-      await postToCloudAndSync({ action: 'bulk_upsert', rows: flatRows }, null);
-    }
-    showToast(`📥 Đã nạp ${added} ca${autoRiskDetected ? ` (tự bắt ${autoRiskDetected} ca có yếu tố nguy cơ)` : ''}${skipped ? ` · bỏ qua ${skipped} mã trùng` : ''}!`);
+    showToast(`📥 Đã nạp ${added} ca vào kho sàng lọc trên máy${autoRiskDetected ? ` (tự bắt ${autoRiskDetected} ca có yếu tố nguy cơ)` : ''}${skipped ? ` · bỏ qua ${skipped} mã trùng` : ''}!`);
   } finally {
     btn.disabled = false;
-    btn.textContent = '📥 Nạp & Đồng bộ ngay';
+    btn.textContent = '📥 Nạp danh sách sàng lọc';
   }
 }
 
@@ -3271,6 +3314,7 @@ async function saveScreenDecision(decision) {
   if (!hsba) { alert('Vui lòng nhập Mã HSBA!'); return; }
 
   let rec = activeScreenUid ? records.find(r => r.uid === activeScreenUid) : records.find(r => (r.data.ma_hsba || '').toLowerCase() === hsba.toLowerCase());
+  const wasApproved = Boolean(rec && rec.screen_status === 'approved');
   const wasPaperCheck = rec && (rec.screen_status === 'paper_check' || rec.doc_ctg_group === 'group1');
 
   if (!rec) {
@@ -3317,7 +3361,11 @@ async function saveScreenDecision(decision) {
   await dbPut(rec);
   document.getElementById('screenModal').style.display = 'none';
   renderAllViews();
-  pushRecordToCloud(rec);
+  if (decision === 'approved') {
+    pushRecordToCloud(rec);
+  } else if (wasApproved && safeLocal.get('ctg_sync_url')) {
+    postToCloudAndSync({ action: 'delete', uid: rec.uid, ma_hsba: rec.data.ma_hsba || '' }, null);
+  }
 
   if (decision === 'approved') showToast(`✅ Đã duyệt ${hsba} (${rec.data.ma_nc}) sang Hồ sơ đã duyệt!`);
   else if (decision === 'paper_check') showToast(`📄 Đã đưa ${hsba} vào danh sách Cần rút HS giấy!`);
@@ -3329,6 +3377,7 @@ async function quickScreenAction(uid, action) {
   if (!isAdminUnlocked) { alert('🔒 Chỉ Admin TRANG ĐOÀN mới được phân luồng sàng lọc!'); return; }
   const rec = records.find(r => r.uid === uid);
   if (!rec) return;
+  const wasApproved = rec.screen_status === 'approved';
   rec.last_edited_by = safeLocal.get('ctg_user_name') || 'TRANG ĐOÀN';
 
   if (action === 'approve' || action === 'paper_to_approve') {
@@ -3357,7 +3406,11 @@ async function quickScreenAction(uid, action) {
 
   await dbPut(rec);
   renderAllViews();
-  pushRecordToCloud(rec);
+  if (rec.screen_status === 'approved') {
+    pushRecordToCloud(rec);
+  } else if (wasApproved && safeLocal.get('ctg_sync_url')) {
+    postToCloudAndSync({ action: 'delete', uid: rec.uid, ma_hsba: rec.data.ma_hsba || '' }, null);
+  }
 }
 
 function renderScreenTable() {
@@ -3975,8 +4028,10 @@ async function demoteActiveCaseToExclude() {
       document.getElementById('editorBackdrop').style.display = 'none';
       activeUid = null;
       renderAllViews();
-      pushRecordToCloud(rec);
-      showToast(`↩️ Đã chuyển ${rec.data.ma_hsba} về Loại trừ (đã lưu vào Lưu đồ STROBE)!`);
+      if (safeLocal.get('ctg_sync_url')) {
+        await postToCloudAndSync({ action: 'delete', uid: rec.uid, ma_hsba: rec.data.ma_hsba || '' }, null);
+      }
+      showToast(`↩️ Đã chuyển ${rec.data.ma_hsba} về Loại trừ (đã rút khỏi Sheet nhóm & lưu Lưu đồ STROBE)!`);
     }
   });
 }
@@ -4998,7 +5053,7 @@ function exportSPSS_CSV() {
 
 function exportBackupJSON() {
   if (!records.length) { alert('Chưa có dữ liệu.'); return; }
-  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.5', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.6', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `TRANG_DOAN_SaoLuu_${new Date().toISOString().slice(0, 10)}.json`;
@@ -5071,8 +5126,11 @@ function clearAllData() {
     targetHtml: `Tổng cộng: ${records.length} hồ sơ sẽ bị xóa sạch để bắt đầu nhập dữ liệu thật từ NC_001`,
     noteHtml: `⚠️ <b>Lưu ý:</b> Nên bấm <b>"💾 Sao lưu toàn bộ"</b> trước nếu cần giữ bản nháp. Sau khi xóa xong, hồ sơ duyệt đầu tiên sẽ tự động đánh lại mã từ <b>NC_001</b>.`,
     onConfirm: async () => {
-      const tx = db.transaction(STORE, 'readwrite');
-      tx.objectStore(STORE).clear();
+      if (db) {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).clear();
+      }
+      _memDbRecords = [];
       safeLocal.remove('ctg_offline_queue');
       records = [];
       renderAllViews();
