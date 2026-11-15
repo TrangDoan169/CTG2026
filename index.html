@@ -563,6 +563,21 @@
     border-radius: 4px;
     font-weight: 700;
   }
+  .tag-lock {
+    font-size: 11px;
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  input:read-only, select:disabled {
+    background: #eef2ff !important;
+    color: #3730a3 !important;
+    border-color: #c7d2fe !important;
+    cursor: not-allowed !important;
+    font-weight: 600;
+  }
 
   .dx-box {
     margin-top: 15px;
@@ -688,10 +703,11 @@
 <header id="mainHeader">
   <div class="header-inner">
     <div>
-      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.1</span></h1>
+      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.2</span></h1>
     </div>
     <div class="header-actions">
       <span class="sync-pill" id="liveSyncPill" title="Tự động đồng bộ mỗi 15 giây & ngay khi bấm Lưu">⚪ Chưa gắn link nhóm</span>
+      <button class="pill-btn" id="openSheetHeaderBtn" onclick="openGoogleSheet()" style="display:none" title="Mở bảng Google Sheet dữ liệu nhóm">📊 Google Sheet</button>
       <button class="pill-btn" onclick="openGuideModal()">📖 Hướng dẫn</button>
       <button class="pill-btn" id="aiStatusPill" onclick="toggleSettings()">👤 Tên của tôi</button>
       <button class="pill-btn" id="rolePillBtn" onclick="toggleAdminAuth()" title="Quản trị">🔒</button>
@@ -733,8 +749,15 @@
           <input type="password" id="cfgApiKey" placeholder="AIzaSy...">
         </div>
         <div class="fld">
-          <label>3. Link Google Apps Script (đồng bộ tự động):</label>
-          <input type="text" id="cfgSyncUrl" placeholder="https://script.google.com/macros/s/.../exec">
+          <label>3. Link Web App Apps Script (<code>.../exec</code>):</label>
+          <input type="text" id="cfgSyncUrl" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <div class="fld">
+          <label>3b. Link Google Sheet nhóm (để bấm mở xem bảng):</label>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="cfgSheetUrl" autocomplete="off" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1">
+            <button type="button" class="ghost sm" onclick="openGoogleSheet()" style="white-space:nowrap">📊 Mở Sheet</button>
+          </div>
         </div>
         <div class="fld">
           <label>4. Cỡ mẫu mục tiêu dự kiến (BI theo dõi):</label>
@@ -751,10 +774,10 @@
         <a href="https://aistudio.google.com/apikey" target="_blank" style="font-size:13.5px;color:var(--pri);font-weight:700;align-self:center;text-decoration:none">🔑 Lấy Gemini API Key ↗</a>
       </div>
       <details style="margin-top:12px">
-        <summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--pri-dark)">☁️ Mã Google Apps Script V3.1 (Hỗ trợ Phễu sàng lọc, Khóa chốt ca & Đồng bộ lệnh Xóa)</summary>
+        <summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--pri-dark)">☁️ Mã Google Apps Script V3.2 (Hỗ trợ Phễu sàng lọc, Khóa chốt ca & Đồng bộ lệnh Xóa)</summary>
         <div class="hint" style="margin-top:6px;line-height:1.55">
-          Tạo Google Sheet mới → <b>Tiện ích mở rộng → Apps Script</b> → dán toàn bộ mã V3.1 dưới đây → <b>Triển khai → Quản lý các lần triển khai → Chỉnh sửa → Phiên bản mới → Triển khai</b> (Quyền truy cập: <b>Bất kỳ ai / Anyone</b>):
-          <div style="margin-top:6px"><button class="ghost sm" onclick="copyAppsScriptCode()">📋 Sao chép nhanh mã Apps Script V3.1</button></div>
+          Tạo Google Sheet mới → <b>Tiện ích mở rộng → Apps Script</b> → dán toàn bộ mã V3.2 dưới đây → <b>Triển khai → Quản lý các lần triển khai → Chỉnh sửa → Phiên bản mới → Triển khai</b> (Quyền truy cập: <b>Bất kỳ ai / Anyone</b>):
+          <div style="margin-top:6px"><button class="ghost sm" onclick="copyAppsScriptCode()">📋 Sao chép nhanh mã Apps Script V3.2</button></div>
           <pre class="code-box" id="appsScriptBox">function readAllRows_(sheet) {
   var data = sheet.getDataRange().getValues();
   if (data.length &lt;= 1) return [];
@@ -784,6 +807,13 @@ function doPost(e) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     var body = JSON.parse(e.postData.contents);
     var action = body.action || "upsert";
+
+    if (action === "clear_all") {
+      if (sheet.getLastRow() &gt; 1) {
+        sheet.deleteRows(2, sheet.getLastRow() - 1);
+      }
+      return jsonOut_({ status: "ok", serverTime: new Date().toISOString(), rows: [] });
+    }
 
     if (action === "delete") {
       if (sheet.getLastRow() &gt; 1) {
@@ -1263,12 +1293,12 @@ function doPost(e) {
       <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:12px">
         <div class="fld">
           <label>Mã HSBA*</label>
-          <input type="text" id="scr_hsba" placeholder="VD: 26014589" oninput="checkScreenDuplicateHsba()">
+          <input type="text" id="scr_hsba" autocomplete="off" placeholder="VD: 26014589" oninput="checkScreenDuplicateHsba()">
           <div class="dup-alert" id="scrDupAlert"></div>
         </div>
         <div class="fld">
           <label>Họ tên / Năm sinh</label>
-          <input type="text" id="scr_hoten" placeholder="VD: Nguyễn Thị A (1997)">
+          <input type="text" id="scr_hoten" autocomplete="off" placeholder="VD: Nguyễn Thị A (1997)">
         </div>
       </div>
 
@@ -1295,7 +1325,7 @@ function doPost(e) {
         </div>
         <div class="fld">
           <label>Chi tiết yếu tố nguy cơ / Vị trí lưu trữ HS giấy (để đi mượn 1 lượt):</label>
-          <input type="text" id="scr_risk_detail" placeholder="VD: Tiền sản giật + Oxytocin — Lưu trữ phòng KHTH ngày 15/10">
+          <input type="text" id="scr_risk_detail" autocomplete="off" placeholder="VD: Tiền sản giật + Oxytocin — Lưu trữ phòng KHTH ngày 15/10">
         </div>
         <div id="scrTriageAdviceBox" style="margin-top:9px"></div>
       </div>
@@ -1315,7 +1345,7 @@ function doPost(e) {
 
       <div class="fld">
         <label>Ghi chú sàng lọc / Kết quả đối chiếu băng CTG giấy:</label>
-        <input type="text" id="scr_note" placeholder="VD: Đã rút HS giấy ngày 20/10, băng CTG có giảm biến đổi lặp lại -> Đúng Nhóm II">
+        <input type="text" id="scr_note" autocomplete="off" placeholder="VD: Đã rút HS giấy ngày 20/10, băng CTG có giảm biến đổi lặp lại -> Đúng Nhóm II">
       </div>
     </div>
     <div class="modal-footer" style="justify-content:space-between">
@@ -1360,7 +1390,7 @@ function doPost(e) {
     <div class="tab-body">
       <div class="tab-pane active" id="pane_A">
         <div class="grid" id="grid_A"></div>
-        <div class="dx-box"><div class="dx-box-title">⚡ Biến dẫn xuất Phần A (Tự động tính từ Ngày sinh, Chiều cao/Cân nặng & Địa chỉ):</div><div class="dx-chips" id="dx_A"></div></div>
+        <div class="dx-box"><div class="dx-box-title">⚡ Biến dẫn xuất Phần A (Tự động tính từ Năm sinh, Chiều cao/Cân nặng & Địa chỉ):</div><div class="dx-chips" id="dx_A"></div></div>
       </div>
 
       <div class="tab-pane" id="pane_B">
@@ -1453,11 +1483,11 @@ const SCHEMA = {
     { id: 'ma_hsba', label: 'Mã bệnh án / HSBA*', type: 'text', req: true, adminLock: true, placeholder: 'VD: 26014589', help: 'Khóa chính ghép dòng không trùng toàn nhóm' },
     { id: 'ma_nc', label: 'Mã nghiên cứu*', type: 'text', req: true, adminLock: true, placeholder: 'Tự động: NC_001' },
     { id: 'ho_ten', label: 'Họ tên sản phụ', type: 'text', req: false, adminLock: true, placeholder: 'VD: Nguyễn Thị A' },
-    { id: 'ngay_sinh', label: 'Ngày sinh mẹ (tự tính tuổi A1)', type: 'date', req: false },
+    { id: 'nam_sinh', label: 'Năm sinh mẹ (gõ 4 số, VD: 1996 — tự tính tuổi A1)', type: 'number', req: false, min: 1965, max: 2015, placeholder: 'VD: 1996' },
     { id: 'ngay_nhap_vien', label: 'Ngày nhập viện', type: 'date', req: false },
     { id: 'ngay_gio_ctg', label: 'Ngày giờ thực hiện CTG nhóm II', type: 'datetime-local', req: false },
     { id: 'ngay_thu_thap', label: 'Ngày thu thập số liệu', type: 'date', req: false },
-    { id: 'A1', label: 'A1. Tuổi mẹ (tuổi tròn, năm)*', type: 'number', req: true, min: 13, max: 55, placeholder: 'Tự tính từ ngày sinh hoặc nhập trực tiếp' },
+    { id: 'A1', label: 'A1. Tuổi mẹ (tuổi tròn, năm)*', type: 'number', req: true, min: 13, max: 55, placeholder: 'Tự tính từ năm sinh hoặc nhập trực tiếp' },
     { id: 'dia_chi', label: 'Địa chỉ nguyên văn (gõ Phường/Xã tự nhận diện)', type: 'text', req: false, placeholder: 'VD: Phường Hải Châu hoặc Xã Hòa Tiến' },
     { id: 'A3', label: 'A3. Phân nhóm địa chỉ*', type: 'select', req: true, opts: [[0,'0 - Thành thị (Phường/Quận)'],[1,'1 - Nông thôn (Xã/Huyện)']] },
     { id: 'A4', label: 'A4. Nghề nghiệp*', type: 'select', req: true, opts: [[0,'0 - Nội trợ'],[1,'1 - Công chức/Viên chức'],[2,'2 - Buôn bán/Lao động chân tay']] },
@@ -1749,9 +1779,15 @@ function detectLivingAreaFromText(addr) {
   return null;
 }
 
-function calcAgeFromDob(dobStr, refStr) {
-  if (!dobStr) return null;
-  const dob = new Date(dobStr);
+function calcAgeFromDob(birthVal, refStr) {
+  if (birthVal === null || birthVal === undefined || birthVal === '') return null;
+  const s = String(birthVal).trim();
+  const refYear = (refStr && /^\d{4}/.test(String(refStr))) ? Number(String(refStr).slice(0, 4)) : new Date().getFullYear();
+  if (/^\d{4}$/.test(s)) {
+    const age = refYear - Number(s);
+    return (age >= 12 && age <= 60) ? age : null;
+  }
+  const dob = new Date(s);
   const ref = refStr ? new Date(refStr) : new Date();
   if (Number.isNaN(dob.getTime()) || Number.isNaN(ref.getTime())) return null;
   let age = ref.getFullYear() - dob.getFullYear();
@@ -1779,13 +1815,18 @@ function normalizeData(raw) {
     });
   });
 
-  if (r.A1 == null && r.ngay_sinh) {
+  if (r.nam_sinh == null && raw && raw.ngay_sinh) {
+    const ym = String(raw.ngay_sinh).match(/^(\d{4})/);
+    if (ym) r.nam_sinh = Number(ym[1]);
+  }
+
+  if (r.nam_sinh != null) {
     const refDate = r.ngay_nhap_vien || (r.ngay_gio_ctg ? r.ngay_gio_ctg.slice(0, 10) : r.ngay_thu_thap);
-    const age = calcAgeFromDob(r.ngay_sinh, refDate);
+    const age = calcAgeFromDob(r.nam_sinh, refDate);
     if (age != null) r.A1 = age;
   }
 
-  if (r.A3 == null && r.dia_chi) {
+  if (r.dia_chi) {
     const det = detectLivingAreaFromText(r.dia_chi);
     if (det !== null) r.A3 = det;
   }
@@ -1793,11 +1834,11 @@ function normalizeData(raw) {
   if (r.B6 === 0) r.B7 = 0;
   if (r.B8 === 0) { r.B9 = 0; r.B10 = 0; r.B11 = 0; r.B12 = 0; }
 
-  if (r.C1_so != null && r.C1 == null) r.C1 = r.C1_so >= 2 ? 2 : (r.C1_so === 1 ? 1 : 0);
-  if (r.D8_afi != null && r.D8 == null) r.D8 = r.D8_afi < 5 ? 0 : (r.D8_afi > 25 ? 2 : 1);
-  if (r.E6_nhietdo != null && r.E6 == null) r.E6 = r.E6_nhietdo >= 38.0 ? 1 : 0;
+  if (r.C1_so != null) r.C1 = r.C1_so >= 2 ? 2 : (r.C1_so === 1 ? 1 : 0);
+  if (r.D8_afi != null) r.D8 = r.D8_afi < 5 ? 0 : (r.D8_afi > 25 ? 2 : 1);
+  if (r.E6_nhietdo != null) r.E6 = r.E6_nhietdo >= 38.0 ? 1 : 0;
 
-  if (r.F10_phut == null && r.F10_tg_ctg && r.G0_tg_sinh) {
+  if (r.F10_tg_ctg && r.G0_tg_sinh) {
     const mins = calcMinutesDiff(r.F10_tg_ctg, r.G0_tg_sinh);
     if (mins != null) r.F10_phut = mins;
   }
@@ -2034,6 +2075,7 @@ function parseInviteLinkHash() {
     const params = new URLSearchParams(window.location.hash.slice(1));
     if (params.get('key')) localStorage.setItem('ctg_api_key', params.get('key'));
     if (params.get('sync')) localStorage.setItem('ctg_sync_url', params.get('sync'));
+    if (params.get('sheet')) localStorage.setItem('ctg_sheet_url', params.get('sheet'));
     history.replaceState(null, '', window.location.pathname + window.location.search);
     showToast('🔗 Đã tự động kết nối kho dữ liệu chung của nhóm!');
   } catch (e) {}
@@ -2052,11 +2094,21 @@ function ensureUserNamePrompt() {
   }
 }
 
+function openGoogleSheet() {
+  const url = (document.getElementById('cfgSheetUrl')?.value || localStorage.getItem('ctg_sheet_url') || '').trim();
+  if (!url) {
+    alert('Bạn chưa dán link Google Sheet vào ô 3b trong Cấu hình Admin (🔐).');
+    return;
+  }
+  window.open(url, '_blank');
+}
+
 function loadSettings() {
   parseInviteLinkHash();
   document.getElementById('cfgUser').value = localStorage.getItem('ctg_user_name') || '';
   document.getElementById('cfgApiKey').value = localStorage.getItem('ctg_api_key') || '';
   document.getElementById('cfgSyncUrl').value = localStorage.getItem('ctg_sync_url') || '';
+  if (document.getElementById('cfgSheetUrl')) document.getElementById('cfgSheetUrl').value = localStorage.getItem('ctg_sheet_url') || '';
   document.getElementById('cfgTargetN').value = localStorage.getItem('ctg_target_n') || '250';
   updateTopHeaderUI();
   applyRolePermissionsUI();
@@ -2076,9 +2128,24 @@ function saveCollaboratorName() {
 
 function saveSettings() {
   if (!isAdminUnlocked) { alert('Chỉ Admin TRANG ĐOÀN mới được lưu cài đặt hệ thống!'); return; }
+  let syncVal = document.getElementById('cfgSyncUrl').value.trim();
+  let sheetVal = document.getElementById('cfgSheetUrl') ? document.getElementById('cfgSheetUrl').value.trim() : '';
+  if (syncVal && syncVal.includes('docs.google.com/spreadsheets')) {
+    if (!sheetVal) {
+      sheetVal = syncVal;
+      if (document.getElementById('cfgSheetUrl')) document.getElementById('cfgSheetUrl').value = sheetVal;
+    }
+    alert('⚠️ Ô số 3 cần dán link Web App Apps Script (dạng https://script.google.com/macros/s/.../exec), không phải link Google Sheet!\n\nMình đã tự chuyển link Google Sheet sang ô 3b bên cạnh cho bạn rồi nhé.');
+    syncVal = '';
+    document.getElementById('cfgSyncUrl').value = '';
+  }
+  if (syncVal && syncVal.endsWith('/dev')) {
+    alert('⚠️ Bạn đang dán link thử nghiệm (/dev). Hãy vào Apps Script → Triển khai → Quản lý các bản triển khai để lấy link chính thức kết thúc bằng /exec nhé!');
+  }
   localStorage.setItem('ctg_user_name', document.getElementById('cfgUser').value.trim());
   localStorage.setItem('ctg_api_key', document.getElementById('cfgApiKey').value.trim());
-  localStorage.setItem('ctg_sync_url', document.getElementById('cfgSyncUrl').value.trim());
+  localStorage.setItem('ctg_sync_url', syncVal);
+  localStorage.setItem('ctg_sheet_url', sheetVal);
   localStorage.setItem('ctg_target_n', document.getElementById('cfgTargetN').value.trim() || '250');
   const newPin = document.getElementById('cfgAdminPin').value.trim();
   if (newPin) {
@@ -2102,23 +2169,28 @@ function toggleSettings() {
 function updateTopHeaderUI() {
   const user = localStorage.getItem('ctg_user_name');
   const syncUrl = localStorage.getItem('ctg_sync_url');
+  const sheetUrl = localStorage.getItem('ctg_sheet_url');
   const pill = document.getElementById('aiStatusPill');
   if (pill) {
     pill.textContent = isAdminUnlocked
       ? `⚙️ ${user || 'Trang'} · Cấu hình Admin`
       : `👤 ${user || 'Đặt tên của tôi'}`;
   }
+  const sheetBtn = document.getElementById('openSheetHeaderBtn');
+  if (sheetBtn) sheetBtn.style.display = sheetUrl ? '' : 'none';
   if (!syncUrl) setSyncStatus('none', 'Chưa gắn link nhóm');
-  else setSyncStatus('ok', 'Tự động đồng bộ bật');
+  else setSyncStatus('syncing', 'Đang kết nối nhóm...');
 }
 
 function copyShareLink() {
   const key = document.getElementById('cfgApiKey').value.trim();
   const sync = document.getElementById('cfgSyncUrl').value.trim();
+  const sheet = document.getElementById('cfgSheetUrl') ? document.getElementById('cfgSheetUrl').value.trim() : '';
   const base = window.location.href.split('#')[0];
   const hash = new URLSearchParams();
   if (key) hash.set('key', key);
   if (sync) hash.set('sync', sync);
+  if (sheet) hash.set('sheet', sheet);
   const fullUrl = `${base}#${hash.toString()}`;
   navigator.clipboard.writeText(fullUrl)
     .then(() => showToast('🔗 Đã sao chép link mời Cộng sự (không kèm PIN Admin)!'))
@@ -2128,7 +2200,7 @@ function copyShareLink() {
 function copyAppsScriptCode() {
   const code = document.getElementById('appsScriptBox').textContent;
   navigator.clipboard.writeText(code)
-    .then(() => showToast('📋 Đã sao chép mã Apps Script V3.1!'))
+    .then(() => showToast('📋 Đã sao chép mã Apps Script V3.2!'))
     .catch(() => alert('Hãy bôi đen và copy đoạn mã trong khung.'));
 }
 
@@ -2241,7 +2313,12 @@ async function postToCloudAndSync(payload, offlineUidToQueue) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload)
     });
-    const json = await res.json();
+    const rawText = await res.text();
+    if (rawText.trim().startsWith('<')) {
+      setSyncStatus('offline', 'Lỗi quyền Apps Script (chưa chọn Bất kỳ ai)');
+      return false;
+    }
+    const json = JSON.parse(rawText);
     if (json && Array.isArray(json.rows)) {
       await applyCloudRowsToLocal(json.rows);
       renderAllViews();
@@ -2298,7 +2375,13 @@ async function pullFromCloud(silent) {
     }
 
     const res = await fetch(syncUrl);
-    const json = await res.json();
+    const rawText = await res.text();
+    if (rawText.trim().startsWith('<')) {
+      setSyncStatus('offline', 'Lỗi quyền Apps Script (chưa chọn Bất kỳ ai)');
+      if (!silent) showToast('⚠️ Apps Script chưa mở quyền "Bất kỳ ai (Anyone)" hoặc sai link /exec!');
+      return;
+    }
+    const json = JSON.parse(rawText);
     const cloudRows = json.rows || [];
     const cnt = await applyCloudRowsToLocal(cloudRows);
     renderAllViews();
@@ -2338,8 +2421,17 @@ function switchMode(mode) {
 }
 
 function nextResearchCode() {
-  const approvedCount = records.filter(r => r.screen_status === 'approved').length;
-  return 'NC_' + String(approvedCount + 1).padStart(3, '0');
+  const used = new Set(
+    records
+      .filter(r => r.screen_status === 'approved' && r.data && r.data.ma_nc)
+      .map(r => {
+        const m = String(r.data.ma_nc).match(/(\d+)$/);
+        return m ? parseInt(m[1], 10) : 0;
+      })
+  );
+  let n = 1;
+  while (used.has(n)) n++;
+  return 'NC_' + String(n).padStart(3, '0');
 }
 
 function openBulkImportModal() {
@@ -2884,7 +2976,7 @@ function buildAllTabForms() {
           </select>${helpHtml}</div>`;
       }
       return `<div class="fld"><label for="f_${f.id}"><span>${esc(f.label)}</span>${tagHtml}</label>
-        <input id="f_${f.id}" type="${f.type}" step="any" placeholder="${esc(f.placeholder || '')}" oninput="onFieldChange('${f.id}', true)">${helpHtml}${dupHtml}</div>`;
+        <input id="f_${f.id}" name="ctg_${f.id}_fld" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onfocus="if(this.readOnly) this.blur()" type="${f.type}" step="any" placeholder="${esc(f.placeholder || '')}" oninput="onFieldChange('${f.id}', true)">${helpHtml}${dupHtml}</div>`;
     }).join('');
   });
 }
@@ -2964,10 +3056,11 @@ function onFieldChange(id, isManualEdit) {
     if (!tempEditedFields.includes(id)) tempEditedFields.push(id);
     tempAiFields = tempAiFields.filter(x => x !== id);
   }
-  if (id === 'ngay_sinh' || id === 'ngay_nhap_vien') {
-    const dob = document.getElementById('f_ngay_sinh').value;
-    const ref = document.getElementById('f_ngay_nhap_vien').value || document.getElementById('f_ngay_thu_thap').value;
-    const age = calcAgeFromDob(dob, ref);
+  if (id === 'nam_sinh' || id === 'ngay_nhap_vien' || id === 'ngay_gio_ctg' || id === 'ngay_thu_thap') {
+    const by = document.getElementById('f_nam_sinh').value;
+    const ctgVal = document.getElementById('f_ngay_gio_ctg').value;
+    const ref = document.getElementById('f_ngay_nhap_vien').value || (ctgVal ? ctgVal.slice(0, 10) : '') || document.getElementById('f_ngay_thu_thap').value;
+    const age = calcAgeFromDob(by, ref);
     if (age != null) document.getElementById('f_A1').value = age;
   }
   if (id === 'dia_chi') {
@@ -3017,6 +3110,21 @@ function refreshEditorLiveState() {
   const currentRec = activeUid ? records.find(x => x.uid === activeUid) : null;
   const isFinalLockedForCollab = Boolean(currentRec && currentRec.final_locked && !isAdminUnlocked);
 
+  const refDateForAge = r.ngay_nhap_vien || (r.ngay_gio_ctg ? r.ngay_gio_ctg.slice(0, 10) : r.ngay_thu_thap);
+  const autoLockedMap = {
+    A1: calcAgeFromDob(r.nam_sinh, refDateForAge) !== null,
+    A3: Boolean(r.dia_chi && detectLivingAreaFromText(r.dia_chi) !== null),
+    B7: r.B6 === 0,
+    B9: r.B8 === 0,
+    B10: r.B8 === 0,
+    B11: r.B8 === 0,
+    B12: r.B8 === 0,
+    C1: r.C1_so !== null && r.C1_so !== undefined,
+    D8: r.D8_afi !== null && r.D8_afi !== undefined,
+    E6: r.E6_nhietdo !== null && r.E6_nhietdo !== undefined,
+    F10_phut: calcMinutesDiff(r.F10_tg_ctg, r.G0_tg_sinh) !== null
+  };
+
   const vBar = document.getElementById('verifyBarB');
   if (tempCtgVerified) {
     vBar.classList.add('verified');
@@ -3032,8 +3140,17 @@ function refreshEditorLiveState() {
       el.classList.remove('req-empty', 'ai-filled', 'user-edited');
       if (tag) tag.innerHTML = '';
 
+      const isAutoLocked = Boolean(autoLockedMap[f.id]);
+      const isRoleLocked = isFinalLockedForCollab || (!isAdminUnlocked && f.adminLock && Boolean(currentRec && currentRec.data && currentRec.data[f.id]));
+      const totalLocked = Boolean(isRoleLocked || isAutoLocked);
+      if (el.tagName === 'SELECT') el.disabled = totalLocked;
+      else el.readOnly = totalLocked;
+      el.title = isAutoLocked ? '🔒 Mục tự tính/tự phân nhóm từ dữ liệu gốc — xóa dữ liệu gốc nếu muốn nhập tay' : '';
+
       const isEmpty = (r[f.id] === null || r[f.id] === undefined || r[f.id] === '');
-      if (f.req && isEmpty) {
+      if (isAutoLocked) {
+        if (tag) tag.innerHTML = '<span class="tag-lock">🔒 Tự tính</span>';
+      } else if (f.req && isEmpty) {
         el.classList.add('req-empty');
       } else if (tempEditedFields.includes(f.id)) {
         el.classList.add('user-edited');
@@ -3956,7 +4073,7 @@ function runBiNumeric() {
 
 // ================= 12. XUẤT EXCEL 5 SHEET (CÓ CODE_SPSS_SYNTAX) & CSV =================
 const EXPORT_COLS = [
-  'ma_nc','ma_hsba','ho_ten','found_via_paper','ctg_verified','qa_10pct','final_locked','ngay_sinh','ngay_nhap_vien','ngay_gio_ctg','ngay_thu_thap','nguoi_nhap',
+  'ma_nc','ma_hsba','ho_ten','found_via_paper','ctg_verified','qa_10pct','final_locked','nam_sinh','ngay_nhap_vien','ngay_gio_ctg','ngay_thu_thap','nguoi_nhap',
   'A1','A2','dia_chi','A3','khu_vuc_song','A4','A5','A6','A7','A8',
   'B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','B13','B14','B15a','B15b','B15c','B15_tb','B16','B15_lien_quan',
   'B17_1','B17_2','B17_3','B17_4','B17_5','B17_6','B17_7','B17_8','B17_9','B17_10','B17_no_stim','B18a','B18b','B18','B19','B20_to_hop','HIGH_RISK','PROTECTIVE','ghi_chu_ctg',
@@ -4136,7 +4253,7 @@ function exportSPSS_CSV() {
 
 function exportBackupJSON() {
   if (!records.length) { alert('Chưa có dữ liệu.'); return; }
-  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.0', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.2', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `TRANG_DOAN_SaoLuu_${new Date().toISOString().slice(0, 10)}.json`;
@@ -4202,18 +4319,22 @@ async function mergeBackupJSON(event) {
 }
 
 function clearAllData() {
-  if (!isAdminUnlocked) { alert('🔒 Chỉ Admin TRANG ĐOÀN mới được xóa dữ liệu trên máy!'); return; }
+  if (!isAdminUnlocked) { alert('🔒 Chỉ Admin TRANG ĐOÀN mới được xóa dữ liệu!'); return; }
   openConfirmDeleteModal({
-    title: '🚨 CẢNH BÁO XÓA TOÀN BỘ DỮ LIỆU TRÊN MÁY',
-    question: 'Bạn có chắc chắn muốn xóa SẠCH toàn bộ dữ liệu đang lưu trên trình duyệt máy này không?',
-    targetHtml: `Tổng cộng: ${records.length} hồ sơ sẽ bị xóa khỏi bộ nhớ máy này`,
-    noteHtml: `⚠️ <b>Cảnh báo:</b> Bạn nên bấm nút <b>"💾 Sao lưu toàn bộ"</b> trước khi thực hiện thao tác này. (Dữ liệu đã đồng bộ lên Google Sheets của nhóm sẽ không bị xóa).`,
+    title: '🚨 CẢNH BÁO XÓA TOÀN BỘ DỮ LIỆU TEST',
+    question: 'Bạn có chắc chắn muốn xóa SẠCH toàn bộ dữ liệu trên trình duyệt máy này VÀ trên Google Sheet nhóm không?',
+    targetHtml: `Tổng cộng: ${records.length} hồ sơ sẽ bị xóa sạch để bắt đầu nhập dữ liệu thật từ NC_001`,
+    noteHtml: `⚠️ <b>Lưu ý:</b> Nên bấm <b>"💾 Sao lưu toàn bộ"</b> trước nếu cần giữ bản nháp. Sau khi xóa xong, hồ sơ duyệt đầu tiên sẽ tự động đánh lại mã từ <b>NC_001</b>.`,
     onConfirm: async () => {
       const tx = db.transaction(STORE, 'readwrite');
       tx.objectStore(STORE).clear();
+      localStorage.removeItem('ctg_offline_queue');
       records = [];
       renderAllViews();
-      showToast('🗑️ Đã xóa sạch dữ liệu trên máy!');
+      if (localStorage.getItem('ctg_sync_url')) {
+        await postToCloudAndSync({ action: 'clear_all' }, null);
+      }
+      showToast('🗑️ Đã xóa sạch dữ liệu test trên máy & Google Sheet — sẵn sàng bắt đầu từ NC_001!');
     }
   });
 }
