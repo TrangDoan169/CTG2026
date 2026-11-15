@@ -703,7 +703,7 @@
 <header id="mainHeader">
   <div class="header-inner">
     <div>
-      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.2</span></h1>
+      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.3</span></h1>
     </div>
     <div class="header-actions">
       <span class="sync-pill" id="liveSyncPill" title="Tự động đồng bộ mỗi 15 giây & ngay khi bấm Lưu">⚪ Chưa gắn link nhóm</span>
@@ -1571,9 +1571,8 @@ const SCHEMA = {
   ],
   G: [
     { id: 'G1', label: 'G1. Phương thức sinh*', type: 'select', req: true, opts: [[0,'0 - Sinh thường'],[1,'1 - Sinh hỗ trợ (giác hút/forceps)'],[2,'2 - Mổ lấy thai']] },
-    { id: 'G2', label: 'G2. Lý do sinh hỗ trợ (nếu G1=1)', type: 'select', req: false, opts: [[0,'0 - Bất thường tim thai'],[1,'1 - Rặn yếu / GĐ II kéo dài'],[2,'2 - Vết mổ cũ'],[3,'3 - Bệnh lý mẹ chống chỉ định rặn'],[4,'4 - Lý do khác']] },
-    { id: 'G3', label: 'G3. Lý do mổ lấy thai (nếu G1=2)', type: 'select', req: false, opts: [[0,'0 - Thai suy / Bất thường tim thai'],[1,'1 - KPCD thất bại'],[3,'3 - Bất xứng đầu chậu / Ngưng tiến triển'],[4,'4 - Đầu không lọt'],[5,'5 - Nghiệm pháp lọt ngôi chỏm thất bại'],[6,'6 - Khác'],[7,'7 - Chỉ định bệnh lý từ mẹ'],[8,'8 - Cấp cứu sản khoa khác (nhau bong non, sa dây rốn...)']] },
-    { id: 'G3_nguyenvan', label: 'G2/G3a. Ghi nguyên văn chỉ định can thiệp', type: 'text', req: false, placeholder: 'Ghi đúng chẩn đoán trong HSBA' },
+    { id: 'G2', label: 'G2. Lý do sinh hỗ trợ (nếu G1=1 — ghi nguyên văn)', type: 'text', req: false, placeholder: 'Ghi nguyên văn lý do sinh hỗ trợ trong HSBA' },
+    { id: 'G3', label: 'G3. Lý do mổ lấy thai (nếu Mổ lấy thai — ghi nguyên văn)', type: 'text', req: false, placeholder: 'Ghi nguyên văn chỉ định mổ lấy thai trong HSBA' },
     { id: 'G13_gioi_tinh', label: 'Giới tính trẻ sơ sinh (nếu thu thập được)', type: 'select', req: false, opts: [[0,'0 - Nam'],[1,'1 - Nữ'],[9,'9 - Không rõ']] },
     { id: 'G4', label: 'G4. Cân nặng sơ sinh (gram)*', type: 'number', req: true, min: 1000, max: 5500, placeholder: 'VD: 3150' },
     { id: 'G6', label: 'G6. Apgar phút thứ 1 (điểm 0–10)*', type: 'number', req: true, min: 0, max: 10, placeholder: '0 - 10' },
@@ -1842,6 +1841,19 @@ function normalizeData(raw) {
     const mins = calcMinutesDiff(r.F10_tg_ctg, r.G0_tg_sinh);
     if (mins != null) r.F10_phut = mins;
   }
+
+  const LEGACY_G2_MAP = { '0': 'Bất thường tim thai', '1': 'Rặn yếu / GĐ II kéo dài', '2': 'Vết mổ cũ', '3': 'Bệnh lý mẹ chống chỉ định rặn', '4': 'Lý do khác' };
+  const LEGACY_G3_MAP = { '0': 'Thai suy / Bất thường tim thai', '1': 'KPCD thất bại', '3': 'Bất xứng đầu chậu / Ngưng tiến triển', '4': 'Đầu không lọt', '5': 'Nghiệm pháp lọt ngôi chỏm thất bại', '6': 'Khác', '7': 'Chỉ định bệnh lý từ mẹ', '8': 'Cấp cứu sản khoa khác' };
+  if (raw && raw.G3_nguyenvan && String(raw.G3_nguyenvan).trim()) {
+    const nv = String(raw.G3_nguyenvan).trim();
+    if (r.G1 === 1 && (!r.G2 || typeof raw.G2 === 'number' || LEGACY_G2_MAP[r.G2])) r.G2 = nv;
+    if (r.G1 === 2 && (!r.G3 || typeof raw.G3 === 'number' || LEGACY_G3_MAP[r.G3])) r.G3 = nv;
+  } else {
+    if (r.G1 === 1 && (typeof raw?.G2 === 'number' || LEGACY_G2_MAP[r.G2])) r.G2 = LEGACY_G2_MAP[String(r.G2)] || r.G2;
+    if (r.G1 === 2 && (typeof raw?.G3 === 'number' || LEGACY_G3_MAP[r.G3])) r.G3 = LEGACY_G3_MAP[String(r.G3)] || r.G3;
+  }
+  if (r.G1 !== 1) r.G2 = '';
+  if (r.G1 !== 2) r.G3 = '';
 
   return r;
 }
@@ -3023,11 +3035,12 @@ function readCurrentForm() {
 }
 
 function populateForm(data) {
+  const norm = normalizeData(data || {});
   SECTIONS.forEach(sec => {
     SCHEMA[sec].forEach(f => {
       const el = document.getElementById('f_' + f.id);
       if (!el) return;
-      el.value = (data[f.id] === null || data[f.id] === undefined) ? '' : data[f.id];
+      el.value = (norm[f.id] === null || norm[f.id] === undefined) ? '' : norm[f.id];
     });
   });
   document.getElementById('chkVerifyB').checked = tempCtgVerified;
@@ -3089,6 +3102,11 @@ function onFieldChange(id, isManualEdit) {
     const mins = calcMinutesDiff(t1, t2);
     if (mins != null) document.getElementById('f_F10_phut').value = mins;
   }
+  if (id === 'G1') {
+    const g1Val = numOrNull(document.getElementById('f_G1').value);
+    if (g1Val !== 1) document.getElementById('f_G2').value = '';
+    if (g1Val !== 2) document.getElementById('f_G3').value = '';
+  }
   refreshEditorLiveState();
 }
 
@@ -3125,6 +3143,15 @@ function refreshEditorLiveState() {
     F10_phut: calcMinutesDiff(r.F10_tg_ctg, r.G0_tg_sinh) !== null
   };
 
+  const condLockedMap = {
+    G2: r.G1 !== 1
+      ? (r.G1 === 0 ? 'Khóa vì G1 = 0 (Sinh thường)' : (r.G1 === 2 ? 'Khóa vì G1 = Mổ lấy thai' : 'Chọn G1 = 1 (Sinh hỗ trợ) để mở nhập'))
+      : '',
+    G3: r.G1 !== 2
+      ? (r.G1 === 0 ? 'Khóa vì G1 = 0 (Sinh thường)' : (r.G1 === 1 ? 'Khóa vì G1 = 1 (Sinh hỗ trợ)' : 'Chọn G1 = Mổ lấy thai để mở nhập'))
+      : ''
+  };
+
   const vBar = document.getElementById('verifyBarB');
   if (tempCtgVerified) {
     vBar.classList.add('verified');
@@ -3141,15 +3168,28 @@ function refreshEditorLiveState() {
       if (tag) tag.innerHTML = '';
 
       const isAutoLocked = Boolean(autoLockedMap[f.id]);
+      const condLockReason = condLockedMap[f.id] || '';
+      const isCondLocked = Boolean(condLockReason);
       const isRoleLocked = isFinalLockedForCollab || (!isAdminUnlocked && f.adminLock && Boolean(currentRec && currentRec.data && currentRec.data[f.id]));
-      const totalLocked = Boolean(isRoleLocked || isAutoLocked);
+      const totalLocked = Boolean(isRoleLocked || isAutoLocked || isCondLocked);
       if (el.tagName === 'SELECT') el.disabled = totalLocked;
       else el.readOnly = totalLocked;
-      el.title = isAutoLocked ? '🔒 Mục tự tính/tự phân nhóm từ dữ liệu gốc — xóa dữ liệu gốc nếu muốn nhập tay' : '';
+
+      if (f.id === 'G2') {
+        el.placeholder = isCondLocked ? `🔒 ${condLockReason}` : 'Ghi nguyên văn lý do sinh hỗ trợ trong HSBA';
+      } else if (f.id === 'G3') {
+        el.placeholder = isCondLocked ? `🔒 ${condLockReason}` : 'Ghi nguyên văn chỉ định mổ lấy thai trong HSBA';
+      }
+
+      el.title = isAutoLocked
+        ? '🔒 Mục tự tính/tự phân nhóm từ dữ liệu gốc — xóa dữ liệu gốc nếu muốn nhập tay'
+        : (isCondLocked ? `🔒 ${condLockReason}` : '');
 
       const isEmpty = (r[f.id] === null || r[f.id] === undefined || r[f.id] === '');
       if (isAutoLocked) {
         if (tag) tag.innerHTML = '<span class="tag-lock">🔒 Tự tính</span>';
+      } else if (isCondLocked) {
+        if (tag) tag.innerHTML = '<span class="tag-lock">🔒 Khóa theo G1</span>';
       } else if (f.req && isEmpty) {
         el.classList.add('req-empty');
       } else if (tempEditedFields.includes(f.id)) {
@@ -3333,8 +3373,8 @@ function validateClinicalRanges(r) {
       }
     });
   });
-  if (r.G1 === 1 && r.G2 == null) warnings.push('Đã chọn G1 = 1 (Sinh hỗ trợ) nhưng chưa chọn G2 (Lý do sinh hỗ trợ)');
-  if (r.G1 === 2 && r.G3 == null) warnings.push('Đã chọn G1 = 2 (Mổ lấy thai) nhưng chưa chọn G3 (Lý do mổ lấy thai)');
+  if (r.G1 === 1 && !r.G2) warnings.push('Đã chọn G1 = 1 (Sinh hỗ trợ) nhưng chưa nhập G2 (Lý do sinh hỗ trợ)');
+  if (r.G1 === 2 && !r.G3) warnings.push('Đã chọn G1 = Mổ lấy thai nhưng chưa nhập G3 (Lý do mổ lấy thai)');
   if (r.G6 != null && r.G8 != null && r.G8 < r.G6) warnings.push(`Apgar phút 5 (${r.G8}) thấp hơn Apgar phút 1 (${r.G6}) — kiểm tra xem có gõ ngược 2 ô không!`);
   if (r.F10_phut != null && r.F10_phut > 720) warnings.push(`Thời gian CTG nhóm II → sinh là ${r.F10_phut} phút (> 12 giờ) — kiểm tra lại giờ sáng/chiều (24h)!`);
   return warnings;
@@ -3592,7 +3632,6 @@ const BI_CAT_VARS = [
   { id: 'F12_nhom_60p', label: 'F12. Thời gian CTG nhóm II → sinh (≤60p vs >60p)', opts: [[0,'0 (≤60p)'],[1,'1 (>60p)']] },
   { id: 'G1', label: 'G1. Phương thức sinh (3 nhóm)', opts: [[0,'0 - Sinh thường'],[1,'1 - Sinh hỗ trợ'],[2,'2 - Mổ lấy thai']] },
   { id: 'G1_chung', label: 'G1b. Sinh ngả âm đạo vs Mổ lấy thai', opts: [[0,'0 - Sinh ngả âm đạo'],[1,'1 - Mổ lấy thai']] },
-  { id: 'G3', label: 'G3. Chỉ định mổ lấy thai', opts: [[0,'0 - Thai suy/BT tim thai'],[1,'1 - KPCD thất bại'],[3,'3 - Bất xứng ĐC/Ngưng TT'],[4,'4 - Đầu không lọt'],[5,'5 - NP lọt thất bại'],[6,'6 - Khác'],[7,'7 - Bệnh lý từ mẹ'],[8,'8 - Cấp cứu sản khoa khác']] },
   { id: 'G7', label: 'G7. Apgar phút 1 < 7', opts: [[0,'0 - ≥7 điểm'],[1,'1 - <7 điểm']] },
   { id: 'G9', label: 'G9. Apgar phút 5 < 7', opts: [[0,'0 - ≥7 điểm'],[1,'1 - <7 điểm']] },
   { id: 'G10', label: 'G10. Có hồi sức sơ sinh', opts: [[0,'0 - Không'],[1,'1 - Có']] },
@@ -4081,7 +4120,7 @@ const EXPORT_COLS = [
   'D1','D1_tang_can','D2_tuan','D2_ngay','D2_text','D3','D4','D5','D5_tha_tk','D6','D10_gbs','D7','D8_afi','D8','D12_doppler','D13_sa_khac','D9','D9_chitiet',
   'E1','E1_co_kpcd','E1_khac','E2','E3','E8_gd_cd','E4','E4_gio_vo_oi','E5','E6_nhietdo','E6','E7',
   'F1','F2','F3','F4','F5','F6','F7','F8','F8_khac','F9','F9_chitiet','F10_tg_ctg','G0_tg_sinh','F10_phut','F11_nhom_30p','F12_nhom_60p',
-  'G1','G1_chung','G2','G3','G3_nguyenvan','G13_gioi_tinh','G4','G5','G5_phuluc','G6','G7','G8','G9','G10','G11','G12','G14_bc_ss'
+  'G1','G1_chung','G2','G3','G13_gioi_tinh','G4','G5','G5_phuluc','G6','G7','G8','G9','G10','G11','G12','G14_bc_ss'
 ];
 
 const SPSS_VALUE_LABELS = {
@@ -4121,7 +4160,6 @@ const SPSS_VALUE_LABELS = {
   F12_nhom_60p: { 0: '<= 60 phút', 1: '> 60 phút' },
   G1: { 0: 'Sinh thường', 1: 'Sinh hỗ trợ (giác hút/forceps)', 2: 'Mổ lấy thai' },
   G1_chung: { 0: 'Sinh ngả âm đạo', 1: 'Mổ lấy thai' },
-  G3: { 0: 'Thai suy / Bất thường tim thai', 1: 'KPCD thất bại', 3: 'Bất xứng đầu chậu / Ngưng tiến triển', 4: 'Đầu không lọt', 5: 'Nghiệm pháp lọt thất bại', 6: 'Khác', 7: 'Chỉ định bệnh lý từ mẹ', 8: 'Cấp cứu sản khoa khác' },
   G5: { 0: '< 2500g', 1: '2500 - <3500g', 2: '>= 3500g' },
   G7: { 0: 'Không (>=7)', 1: 'Có (<7)' }, G9: { 0: 'Không (>=7)', 1: 'Có (<7)' }, G10: { 0: 'Không', 1: 'Có' },
   G11: { 0: 'Chăm sóc thường quy', 1: 'Hỗ trợ oxy', 2: 'Thở CPAP', 3: 'Thông khí áp lực dương qua mặt nạ', 4: 'Đặt nội khí quản / Thở máy', 5: 'Ép tim / dùng thuốc' },
@@ -4146,7 +4184,7 @@ function generateSpssSyntaxLines() {
     [`  E4 'Tình trạng ối lúc CTG'`], [`  E5 'Nước ối lẫn phân su'`], [`  E6 'Mẹ sốt (>=38 độ C)'`], [`  E7 'Nhiễm trùng ối'`],
     [`  F1 'Có hồi sức trong tử cung'`], [`  F9 'Diễn tiến CTG sau xử trí'`], [`  F10_phut 'Thời gian từ CTG nhóm II đến sinh (phút)'`],
     [`  F11_nhom_30p 'Phân nhóm thời gian 30 phút'`], [`  F12_nhom_60p 'Phân nhóm thời gian 60 phút'`],
-    [`  G1 'Phương thức sinh'`], [`  G3 'Lý do mổ lấy thai'`], [`  G4 'Cân nặng sơ sinh (gram)'`], [`  G5 'Nhóm cân nặng sơ sinh'`],
+    [`  G1 'Phương thức sinh'`], [`  G4 'Cân nặng sơ sinh (gram)'`], [`  G5 'Nhóm cân nặng sơ sinh'`],
     [`  G6 'Apgar phút 1'`], [`  G7 'Apgar phút 1 < 7'`], [`  G8 'Apgar phút 5'`], [`  G9 'Apgar phút 5 < 7'`],
     [`  G10 'Có hồi sức sơ sinh'`], [`  G11 'Biện pháp hồi sức sơ sinh cao nhất'`], [`  G12 'Tình trạng trẻ sau sinh (NICU)'.`],
     [''],
@@ -4253,7 +4291,7 @@ function exportSPSS_CSV() {
 
 function exportBackupJSON() {
   if (!records.length) { alert('Chưa có dữ liệu.'); return; }
-  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.2', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.3', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `TRANG_DOAN_SaoLuu_${new Date().toISOString().slice(0, 10)}.json`;
