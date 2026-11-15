@@ -669,6 +669,12 @@
     align-items: center;
     flex-wrap: wrap;
   }
+  .ctg-thumb-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
   .ctg-thumb-wrap img {
     width: 195px;
     max-height: 130px;
@@ -676,6 +682,19 @@
     border-radius: 8px;
     border: 1px solid var(--bd);
     cursor: zoom-in;
+  }
+  .final-lock-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #3730a3;
+    cursor: pointer;
+    background: #eef2ff;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid #c7d2fe;
   }
   .verify-bar {
     background: #fefce8;
@@ -764,7 +783,7 @@
 <header id="mainHeader">
   <div class="header-inner">
     <div>
-      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.7</span></h1>
+      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.9 · ACOG 2025+</span></h1>
     </div>
     <div class="header-actions">
       <span class="sync-pill" id="liveSyncPill" onclick="onSyncPillClick()" style="cursor:pointer" title="Bấm để gắn link nhóm hoặc đồng bộ ngay">⚪ Chưa gắn link nhóm</span>
@@ -1262,6 +1281,7 @@
       <div class="fld" style="margin-bottom:10px">
         <label>Nếu LOẠI — Chọn lý do loại trừ (xuất Nhật ký sàng lọc & Lưu đồ STROBE):</label>
         <select id="scr_reason">
+          <option value="CTG Nhóm III (Tiêu chuẩn loại trừ — Mất DĐNT kèm giảm muộn/biến đổi lặp lại hoặc nhịp chậm)">0. CTG Nhóm III (Tiêu chuẩn loại trừ — Mất DĐNT kèm giảm muộn/biến đổi lặp lại hoặc nhịp chậm)</option>
           <option value="CTG Nhóm I bình thường thật sự (không yếu tố nguy cơ)">1. CTG Nhóm I bình thường thật sự (không có yếu tố nguy cơ)</option>
           <option value="CTG Nhóm I bình thường thật sự (đã đối chiếu HS giấy)">2. CTG Nhóm I bình thường thật sự (đã rút HS giấy kiểm tra lại)</option>
           <option value="CTG < 30 phút hoặc mất tín hiệu / mờ">3. Bản ghi CTG &lt; 30 phút hoặc mất tín hiệu, mờ không đọc được</option>
@@ -1325,8 +1345,9 @@
       <div class="tab-pane" id="pane_B">
         <div class="ctg-ai-box">
           <div class="ctg-thumb-wrap" id="edImgWrap" style="display:none">
-            <img id="edImgThumb" alt="Ảnh CTG" onclick="openImgLightbox(this.src)">
-            <div style="font-size:12px;color:var(--mut);text-align:center;margin-top:3px">Bấm ảnh để phóng to</div>
+            <img id="edImgThumb" alt="Ảnh CTG" onclick="openImgLightbox(this.src)" onerror="this.style.display='none'">
+            <div id="edImgZoomHint" style="font-size:12px;color:var(--mut);text-align:center">Bấm ảnh để phóng to</div>
+            <a id="edImgDriveLink" href="#" target="_blank" rel="noopener" style="display:none;font-size:12px;font-weight:700;color:var(--pri);text-decoration:none;background:#fff;border:1px solid #bfdbfe;padding:3px 8px;border-radius:6px">🔗 Mở ảnh gốc trên Drive ↗</a>
           </div>
           <div style="flex:1;min-width:240px">
             <div style="font-weight:800;color:var(--pri-dark);margin-bottom:4px">📸 Chụp hoặc chọn ảnh đoạn CTG Nhóm II sớm nhất (≥ 30 phút)</div>
@@ -1338,6 +1359,8 @@
             </div>
           </div>
         </div>
+
+        <div id="ctgClinicalAlertBox" style="display:none;margin-bottom:12px"></div>
 
         <div class="verify-bar admin-only" id="verifyBarB" style="display:none">
           <label class="verify-label">
@@ -1384,7 +1407,7 @@
         <button class="warn sm admin-only" id="btnDemoteToExclude" onclick="demoteActiveCaseToExclude()" title="Chuyển ca này về Loại trừ (giữ nguyên dữ liệu để vẽ lưu đồ STROBE)">↩️ Loại trừ (Giữ lưu đồ)</button>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <label class="admin-only" style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:#3730a3;cursor:pointer;background:#eef2ff;padding:6px 10px;border-radius:8px;border:1px solid #c7d2fe">
+        <label class="admin-only final-lock-label">
           <input type="checkbox" id="chkFinalLock" style="width:18px;height:18px;min-height:auto">
           <span>🔐 Chốt khóa hồ sơ (Cộng sự chỉ xem)</span>
         </label>
@@ -1624,7 +1647,8 @@ const DERIVED_DEFS = {
     { id: 'B17_10', label: 'B17.10 ≥2 giảm kéo dài (Bảng 3.13)', opts: [[0,'0'],[1,'1']] },
     { id: 'B18', label: 'HIGH_RISK (B18. Nguy cơ cao)', opts: [[0,'0 (Không)'],[1,'1 (Có)']] },
     { id: 'B19', label: 'PROTECTIVE (B19. Bảo vệ)', opts: [[0,'0 (Không)'],[1,'1 (Có)']] },
-    { id: 'B20_to_hop', label: 'B20. Tổ hợp B18 & B19 (Bảng 3.14)', opts: [[0,'0 (Không có cả hai)'],[1,'1 (Chỉ có bảo vệ)'],[2,'2 (Chỉ có nguy cơ cao)'],[3,'3 (Đồng thời cả hai)']] }
+    { id: 'B20_to_hop', label: 'B20. Tổ hợp B18 & B19 (Bảng 3.14)', opts: [[0,'0 (Không có cả hai)'],[1,'1 (Chỉ có bảo vệ)'],[2,'2 (Chỉ có nguy cơ cao)'],[3,'3 (Đồng thời cả hai)']] },
+    { id: 'IS_CAT3_ALERT', label: '🚨 Cảnh báo CTG Nhóm III', opts: [[0,'0 (Không — Đạt Nhóm II)'],[1,'1 (⚠️ CÓ — Thuộc Nhóm III, loại trừ!)']] }
   ],
   C: [
     { id: 'con_so_con_ra', label: 'Phân loại Con so / Con rạ', opts: [[0,'0 (Con so)'],[1,'1 (Con rạ)']] }
@@ -1831,9 +1855,11 @@ function switchGuideTab(tabName) {
 
 let pendingConfirmAction = null;
 
-function openConfirmDeleteModal({ title, question, targetHtml, noteHtml, onConfirm }) {
+function openConfirmDeleteModal({ title, question, targetHtml, noteHtml, confirmBtnText, confirmBtnClass, headerBg, onConfirm }) {
   pendingConfirmAction = onConfirm;
-  document.getElementById('confirmModalTitle').textContent = title || '⚠️ Xác nhận xóa dữ liệu';
+  const hdEl = document.getElementById('confirmModalTitle');
+  hdEl.textContent = title || '⚠️ Xác nhận xóa dữ liệu';
+  hdEl.style.background = headerBg || '#991b1b';
   document.getElementById('confirmModalQuestion').textContent = question || 'Bạn có chắc chắn muốn xóa mục này không?';
   const targetEl = document.getElementById('confirmModalTarget');
   if (targetHtml) {
@@ -1843,6 +1869,9 @@ function openConfirmDeleteModal({ title, question, targetHtml, noteHtml, onConfi
     targetEl.style.display = 'none';
   }
   document.getElementById('confirmModalNote').innerHTML = noteHtml || '';
+  const execBtn = document.getElementById('btnConfirmDeleteExec');
+  execBtn.textContent = confirmBtnText || '🗑️ Có, chắc chắn xóa';
+  execBtn.className = confirmBtnClass || 'danger';
   document.getElementById('confirmModal').style.display = 'flex';
 }
 
@@ -1923,10 +1952,12 @@ function normalizeDateValue(val) {
     }
     return s.slice(0, 10);
   }
-  // DD/MM/YYYY or D/M/YYYY (with optional time tail)
-  const dmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+  // DD/MM/YYYY or D/M/YY (with optional time tail, supports 2-digit Excel years)
+  const dmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2}|\d{4})(?:\s|$|T)/);
   if (dmy) {
-    const day = Number(dmy[1]), mon = Number(dmy[2]), yr = dmy[3];
+    const day = Number(dmy[1]), mon = Number(dmy[2]);
+    let yr = dmy[3];
+    if (yr.length === 2) yr = Number(yr) <= 50 ? '20' + yr : '19' + yr;
     if (mon >= 1 && mon <= 12 && day >= 1 && day <= 31) {
       return `${yr}-${String(mon).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
@@ -2141,9 +2172,15 @@ function deriveAll(r) {
 
   d.B2 = (r.B1 == null) ? null : (r.B1 < 110 ? 0 : (r.B1 > 160 ? 2 : 1));
   d.B13 = (r.B14 == null) ? null : (r.B14 >= 1 ? 1 : 0);
-  const w = [r.B15a, r.B15b, r.B15c].filter(v => v != null);
-  d.B15_tb = w.length ? Number((w.reduce((a, b) => a + b, 0) / w.length).toFixed(2)) : null;
+
+  // Chỉ tính trung bình cơn co và Tachysystole khi đã nhập đủ cả 3 cửa sổ 10 phút (30 phút theo ACOG)
+  const hasAll30mWindows = (r.B15a != null && r.B15b != null && r.B15c != null);
+  d.B15_tb = hasAll30mWindows ? Number(((r.B15a + r.B15b + r.B15c) / 3).toFixed(2)) : null;
   d.B16 = (d.B15_tb == null) ? null : (d.B15_tb > 5 ? 1 : 0);
+
+  // Cảnh báo CTG Nhóm III (Mất DĐNT kèm giảm muộn lặp lại, giảm biến đổi lặp lại, hoặc nhịp chậm < 110)
+  const isCat3 = (r.B3 === 0) && (r.B7 === 1 || r.B9 === 1 || (r.B1 != null && r.B1 < 110));
+  d.IS_CAT3_ALERT = isCat3 ? 1 : 0;
 
   const ddtb = (r.B3 === 1 || r.B3 === 2);
   const decLap = (r.B7 === 1 || r.B9 === 1);
@@ -2158,14 +2195,16 @@ function deriveAll(r) {
   d.B17_9 = (r.B8 == null) ? null : ((r.B8 === 1 && (r.B10 === 1 || r.B11 === 1 || r.B12 === 1)) ? 1 : 0);
   d.B17_10 = (r.B14 == null) ? null : (r.B14 >= 2 ? 1 : 0);
 
-  const hiInputs = [r.B3, r.B18a, r.B18b, r.B7, r.B9, r.B14];
+  // Chỉ kết luận B18 = 0 khi đã đủ các biến cốt lõi của B18 (tránh âm tính giả khi nhập dở)
   const hiConds = [r.B3 === 0, r.B18a === 1, r.B18b === 1, r.B7 === 1, r.B9 === 1, (r.B14 != null && r.B14 >= 2)];
+  const hasAllHiInputs = [r.B3, r.B7, r.B9, r.B14, r.B18a, r.B18b].every(v => v != null && v !== 9);
   if (hiConds.some(Boolean)) d.B18 = 1;
-  else if (hiInputs.every(v => v == null)) d.B18 = null;
+  else if (!hasAllHiInputs) d.B18 = null;
   else d.B18 = 0;
 
+  // Chỉ kết luận B19 = 0 khi đã nhập đủ cả B3 và B4 (tránh âm tính giả khi mới nhập 1 ô)
   if (r.B3 === 2 || r.B4 === 1) d.B19 = 1;
-  else if (r.B3 == null && r.B4 == null) d.B19 = null;
+  else if (r.B3 == null || r.B4 == null) d.B19 = null;
   else d.B19 = 0;
 
   if (d.B18 != null && d.B19 != null) {
@@ -2285,6 +2324,7 @@ let activeTab = 'A';
 let activeScreenUid = null;
 let tempImgDataUrl = null;
 let tempImgDriveUrl = '';
+let tempForceUploadImage = false;
 let tempAiFields = [];
 let tempEditedFields = [];
 let tempCtgVerified = false;
@@ -2631,6 +2671,7 @@ const SPSS_COL_MAP = {
   B20_to_hop: 'B20_ToHopNguyCoCaoBaoVe',
   HIGH_RISK: 'B18_HIGH_RISK',
   PROTECTIVE: 'B19_PROTECTIVE',
+  IS_CAT3_ALERT: 'B22_CanhBaoCTGNhomIII',
   ghi_chu_ctg: 'B21_GhiChuDocCTG',
 
   C1_so: 'C1a_SoLanMangThaiTruoc',
@@ -2885,6 +2926,19 @@ async function postToCloudAndSync(payload, offlineUidToQueue) {
       return false;
     }
     const json = JSON.parse(rawText);
+    if (json && json.imgDriveUrl && payload && payload.row && payload.row.SYS_UID) {
+      const targetRec = records.find(r => r.uid === payload.row.SYS_UID);
+      if (targetRec) {
+        targetRec.imgDriveUrl = String(json.imgDriveUrl).trim();
+        targetRec.forceUploadImage = false;
+        await dbPut(targetRec);
+        if (activeUid === targetRec.uid) {
+          tempImgDriveUrl = targetRec.imgDriveUrl;
+          tempForceUploadImage = false;
+          renderEditorImagePreview();
+        }
+      }
+    }
     if (json && (Array.isArray(json.screeningRows) || Array.isArray(json.rows))) {
       if (Array.isArray(json.screeningRows)) await applyCloudRowsToLocal(json.screeningRows);
       if (Array.isArray(json.rows)) await applyCloudRowsToLocal(json.rows);
@@ -2904,14 +2958,26 @@ async function postToCloudAndSync(payload, offlineUidToQueue) {
 async function pushRecordToCloud(rec) {
   if (!rec) return;
   const flatRow = buildCloudFlatRow(rec);
-  // Only send imgBase64 when the record does NOT already have a Google Drive image link (prevents duplicate .jpg files on Drive)
-  const shouldUploadImg = Boolean(!rec.imgDriveUrl && rec.imgDataUrl);
+  const forceUpload = Boolean(rec.forceUploadImage);
+  const shouldUploadImg = Boolean(rec.imgDataUrl && (!rec.imgDriveUrl || forceUpload));
   const ok = await postToCloudAndSync(
-    { action: 'upsert', row: flatRow, imgBase64: shouldUploadImg ? rec.imgDataUrl : '' },
+    {
+      action: 'upsert',
+      row: flatRow,
+      imgBase64: shouldUploadImg ? rec.imgDataUrl : '',
+      forceUploadImage: forceUpload
+    },
     rec.uid
   );
-  if (ok) showToast('☁️ Đã lưu & đồng bộ tự động cho cả nhóm!');
-  else if (safeLocal.get('ctg_sync_url')) showToast('🟠 Mạng yếu: Đã lưu trên máy, sẽ tự đồng bộ khi có mạng!');
+  if (ok) {
+    if (rec.forceUploadImage) {
+      rec.forceUploadImage = false;
+      await dbPut(rec);
+    }
+    showToast('☁️ Đã lưu & đồng bộ tự động cho cả nhóm!');
+  } else if (safeLocal.get('ctg_sync_url')) {
+    showToast('🟠 Mạng yếu: Đã lưu trên máy, sẽ tự đồng bộ khi có mạng!');
+  }
 }
 
 async function sendCaseLockAction(rec, actionType) {
@@ -2941,11 +3007,16 @@ async function pullFromCloud(silent) {
     for (const qUid of queue) {
       const qRec = records.find(r => r.uid === qUid);
       if (qRec) {
-        const shouldUploadImg = Boolean(!qRec.imgDriveUrl && qRec.imgDataUrl);
-        await postToCloudAndSync(
-          { action: 'upsert', row: buildCloudFlatRow(qRec), imgBase64: shouldUploadImg ? qRec.imgDataUrl : '' },
+        const forceUpload = Boolean(qRec.forceUploadImage);
+        const shouldUploadImg = Boolean(qRec.imgDataUrl && (!qRec.imgDriveUrl || forceUpload));
+        const synced = await postToCloudAndSync(
+          { action: 'upsert', row: buildCloudFlatRow(qRec), imgBase64: shouldUploadImg ? qRec.imgDataUrl : '', forceUploadImage: forceUpload },
           qUid
         );
+        if (synced && qRec.forceUploadImage) {
+          qRec.forceUploadImage = false;
+          await dbPut(qRec);
+        }
       } else {
         removeFromOfflineQueue(qUid);
       }
@@ -3056,13 +3127,14 @@ function stripVnAccents(str) {
 function matchHeaderKey(rawCell) {
   const h = stripVnAccents(rawCell);
   if (!h) return null;
-  if (/^(ma|so)\s*(hsba|benh\s*an|ba|ho\s*so|hs|luu\s*tru|y\s*te|bn)$/.test(h) || h === 'id mahsba' || h === 'mahsba') return 'hsba';
+  if (/^(ma|so)\s*(hsba|benh\s*an|ba|ho\s*so(\s*benh\s*an)?|hs|luu\s*tru|y\s*te|bn|benh\s*nhan|vao\s*vien|dieu\s*tri)$/.test(h) || h === 'id mahsba' || h === 'mahsba') return 'hsba';
   if (/^(ho\s*(va\s*)?ten|ten\s*(bn|benh\s*nhan|san\s*phu)|san\s*phu|benh\s*nhan|id\s*hotensanphu)$/.test(h)) return 'hoten';
-  if (/^(khoa(\s*dieu\s*tri|\s*phong)?|ten\s*khoa|buong\s*khoa|id\s*khoa)$/.test(h)) return 'khoa';
-  if (/^(dia\s*chi(\s*lien\s*he|\s*thuong\s*tru)?|noi\s*o|ho\s*khau|a3a\s*diachinguyenvan)$/.test(h)) return 'diachi';
-  if (/^(nam\s*sinh|ngay\s*sinh|ns|dob|id\s*namsinhme)$/.test(h)) return 'namsinh';
-  if (/^(ngay\s*(nhap|vao)\s*vien|ngay\s*(vao|nv|vv)|thoi\s*gian\s*(nhap|vao)\s*vien|id\s*ngaynhapvien)$/.test(h)) return 'ngaynv';
-  if (/^(chan\s*doan(\s*vao\s*vien|\s*luc\s*vao|\s*nhap\s*vien|\s*chinh|\s*ban\s*dau)?|benh\s*chinh|ly\s*do\s*vao\s*vien|qa\s*chandoanvaovien)$/.test(h)) return 'chandoan';
+  if (/^(khoa(\s*dieu\s*tri|\s*phong|\s*sinh)?|ten\s*khoa|buong\s*khoa|id\s*khoa)$/.test(h)) return 'khoa';
+  if (/^(dia\s*chi(\s*lien\s*he|\s*thuong\s*tru|\s*tam\s*tru)?|noi\s*o|ho\s*khau|cho\s*o|a3a\s*diachinguyenvan)$/.test(h)) return 'diachi';
+  if (/^(nam\s*sinh|ngay(\s*thang\s*nam)?\s*sinh|ns|dob|id\s*namsinhme)$/.test(h)) return 'namsinh';
+  if (/^(tuoi|tuoi\s*me|a1\s*tuoime)$/.test(h)) return 'tuoi';
+  if (/^(ngay\s*(nhap|vao)\s*vien|ngay\s*(vao|nv|vv|dieu\s*tri)|thoi\s*gian\s*(nhap|vao)\s*vien|id\s*ngaynhapvien)$/.test(h)) return 'ngaynv';
+  if (/^(chan\s*doan(\s*vao\s*vien|\s*luc\s*vao|\s*nhap\s*vien|\s*chinh|\s*ban\s*dau|\s*ra\s*vien)?|benh\s*(chinh|kem\s*theo)|ly\s*do\s*vao\s*vien|qa\s*chandoanvaovien)$/.test(h)) return 'chandoan';
   if (/^(yeu\s*to\s*nguy\s*co|nguy\s*co|qa\s*chitietyeutonguyco)$/.test(h)) return 'nguyco';
   return null;
 }
@@ -3080,7 +3152,7 @@ function inferRowWithoutHeaders(cells) {
     if (idx === 0 && /^\d{1,3}$/.test(val) && cells.length > 2) return;
 
     // Mã HSBA (chuỗi mã 4-20 ký tự chứa >= 4 chữ số, không phải năm sinh 1950-2015)
-    if (!out.hsba && /^[A-Za-z0-9\-\/]{4,20}$/.test(val) && (val.match(/\d/g) || []).length >= 4 && !/^(19[5-9]\d|20[0-1]\d)$/.test(val)) {
+    if (!out.hsba && /^[A-Za-z0-9\-\/\.]{4,22}$/.test(val) && (val.match(/\d/g) || []).length >= 4 && !/^(19[5-9]\d|20[0-1]\d)$/.test(val)) {
       out.hsba = val;
       return;
     }
@@ -3178,8 +3250,13 @@ function parseRowsMatrixSmart(matrix) {
       const hoten = getCol('hoten');
       const khoa = getCol('khoa') || 'Khoa sinh';
       const diachi = getCol('diachi');
-      const namsinh = extractBirthYear(getCol('namsinh'));
       const ngaynv = normalizeDateValue(getCol('ngaynv'));
+      let namsinh = extractBirthYear(getCol('namsinh'));
+      if (namsinh == null && colMap.tuoi !== undefined) {
+        const ageNum = numOrNull(getCol('tuoi'));
+        const refYr = ngaynv ? Number(ngaynv.slice(0, 4)) : new Date().getFullYear();
+        if (ageNum != null && ageNum >= 13 && ageNum <= 55) namsinh = refYr - Math.floor(ageNum);
+      }
       const chandoan = [getCol('chandoan'), getCol('nguyco')].filter(Boolean).join(' · ');
       item = { hsba, hoten, khoa, diachi, namsinh, ngaynv, chandoan };
     } else {
@@ -3781,9 +3858,13 @@ function renderStudyTable() {
       ? `<b>${esc(khoaDisplay)}</b> · ${aSec.A1}t${aSec.dia_chi ? ' · ' + esc(aSec.dia_chi) : ''} · ${d.D2_text || '?'}`
       : `<span style="color:var(--mut)">🏥 ${esc(khoaDisplay)}${aSec.dia_chi ? ' · 📍 ' + esc(aSec.dia_chi) : ''}${aSec.nam_sinh ? ' · SN ' + aSec.nam_sinh : ''}</span>`;
 
+    const hrBadge = d.B18 === 1
+      ? '<span class="badge bHi">HIGH_RISK</span>'
+      : (d.B18 === 0 ? '<span class="badge bOk">Không HR</span>' : '<span class="badge bScreenWait">Chưa đủ B18</span>');
+    const cat3Badge = d.IS_CAT3_ALERT === 1 ? ' <span class="badge bExcl">🚨 CTG Nhóm III!</span>' : '';
     const ctgSummary = aSec.B1 != null
-      ? `NTT ${aSec.B1} · ${d.B18 === 1 ? '<span class="badge bHi">HIGH_RISK</span>' : '<span class="badge bOk">Không HR</span>'}`
-      : `<span style="color:var(--mut)">Chưa đọc B</span>`;
+      ? `NTT ${aSec.B1} · ${hrBadge}${cat3Badge}`
+      : (d.IS_CAT3_ALERT === 1 ? `<span class="badge bExcl">🚨 CTG Nhóm III!</span>` : `<span style="color:var(--mut)">Chưa đọc B</span>`);
 
     const efSummary = aSec.E1 != null
       ? `${aSec.E1 === 0 ? 'CD tự nhiên' : 'KPCD'} · ${d.F1 === 1 ? 'Có HSTC' : 'Không HSTC'}`
@@ -4315,7 +4396,10 @@ function populateFormFromData(dataObj, readOnlyMode = false) {
       el.value = (val === null || val === undefined) ? '' : val;
 
       const isAdminLockedField = !isAdminUnlocked && f.adminLock && el.value !== '';
-      const shouldDisable = readOnlyMode || isAdminLockedField;
+      const isCondInactive = (f.id === 'G2' && numOrNull(dataObj.G1) !== 1)
+        || (f.id === 'G3' && numOrNull(dataObj.G1) !== 2)
+        || (f.id === 'E1_khac' && numOrNull(dataObj.E1) !== 5);
+      const shouldDisable = readOnlyMode || isAdminLockedField || isCondInactive;
 
       if (f.type === 'select') el.disabled = shouldDisable;
       else el.readOnly = shouldDisable;
@@ -4382,9 +4466,20 @@ function onFieldInput(fieldId) {
   if (fieldId === 'B8' && norm.B8 === 0) {
     ['B9','B10','B11','B12'].forEach(k => document.getElementById('f_' + k).value = 0);
   }
-  if (fieldId === 'G1') {
-    document.getElementById('f_G2').value = norm.G2 || '';
-    document.getElementById('f_G3').value = norm.G3 || '';
+  if (fieldId === 'G1' || fieldId === 'E1') {
+    if (fieldId === 'G1') {
+      document.getElementById('f_G2').value = norm.G2 || '';
+      document.getElementById('f_G3').value = norm.G3 || '';
+    }
+    if (fieldId === 'E1' && norm.E1 !== 5) {
+      document.getElementById('f_E1_khac').value = '';
+    }
+    const g2El = document.getElementById('f_G2');
+    const g3El = document.getElementById('f_G3');
+    const e1kEl = document.getElementById('f_E1_khac');
+    if (g2El) g2El.readOnly = readOnlyMode || norm.G1 !== 1;
+    if (g3El) g3El.readOnly = readOnlyMode || norm.G1 !== 2;
+    if (e1kEl) e1kEl.readOnly = readOnlyMode || norm.E1 !== 5;
   }
   refreshLiveDerivedAndStatus(readOnlyMode);
 }
@@ -4399,6 +4494,50 @@ function onVerifyBChange() {
   tempCtgVerified = document.getElementById('chkVerifyB').checked;
   document.getElementById('verifyBarB').classList.toggle('verified', tempCtgVerified);
   refreshLiveDerivedAndStatus();
+}
+
+function renderClinicalAlertsB(norm, d) {
+  const box = document.getElementById('ctgClinicalAlertBox');
+  if (!box) return;
+  const alerts = [];
+
+  if (d.IS_CAT3_ALERT === 1) {
+    const reasons = [];
+    if (norm.B7 === 1) reasons.push('Nhịp giảm muộn lặp lại (B7=1)');
+    if (norm.B9 === 1) reasons.push('Nhịp giảm biến đổi lặp lại (B9=1)');
+    if (norm.B1 != null && norm.B1 < 110) reasons.push(`Nhịp tim thai cơ bản chậm (${norm.B1} bpm < 110)`);
+    alerts.push(`<div class="alert-box alert-bad" style="margin-bottom:8px">
+      🚨 <b>CẢNH BÁO TIÊU CHUẨN LOẠI TRỪ — CTG NHÓM III (ACOG):</b> Hồ sơ đang có <b>Mất dao động nội tại (B3=0)</b> đi kèm <b>${reasons.join(' + ')}</b>. Theo phân loại ACOG, đây là <b>CTG Nhóm III</b> (không thuộc đối tượng CTG Nhóm II của nghiên cứu). Nếu chính xác trên băng giấy, hãy bấm nút <b>"↩️ Loại trừ (Giữ lưu đồ)"</b> ở góc dưới để chuyển sang lưu đồ STROBE!
+    </div>`);
+  }
+
+  if (norm.B3 === 2 && norm.B18a === 1) {
+    alerts.push(`<div class="alert-box alert-warn" style="margin-bottom:8px">
+      ⚠️ <b>Mâu thuẫn biến số B3 &amp; B18a:</b> Ô <b>B3</b> đang chọn <i>"2 - Bình thường / Trung bình (6–25 nhịp/phút)"</i> nhưng ô <b>B18a</b> lại chọn <i>"1 - Có DĐNT tối thiểu kéo dài"</i>. Vui lòng kiểm tra lại giá trị đúng trên băng CTG!
+    </div>`);
+  }
+
+  const hasFeverOrChorio = (norm.E6 === 1) || (norm.E6_nhietdo != null && norm.E6_nhietdo >= 38.0) || (norm.E7 === 1 || norm.E7 === 2);
+  if (norm.B18b === 1 && hasFeverOrChorio) {
+    alerts.push(`<div class="alert-box alert-warn" style="margin-bottom:8px">
+      ⚠️ <b>Đối chiếu bối cảnh lâm sàng B18b:</b> Sản phụ đang ghi nhận <b>Mẹ sốt (E6=1)</b> hoặc <b>Nghi ngờ/Xác định nhiễm trùng ối (E7)</b> ở Phần E. Nhịp tim thai cơ bản chuyển nhanh có thể là thứ phát do mẹ sốt/nhiễm trùng — cân nhắc lại <b>B18b = 0</b> thay vì <i>"1 - Chuyển NTT nhanh không giải thích được"</i>!
+    </div>`);
+  }
+
+  const enteredWindows = [norm.B15a, norm.B15b, norm.B15c].filter(v => v != null).length;
+  if (enteredWindows > 0 && enteredWindows < 3) {
+    alerts.push(`<div class="alert-box alert-info" style="margin-bottom:8px">
+      ℹ️ <b>Cửa sổ cơn co chưa đủ 30 phút (${enteredWindows}/3 ô):</b> Theo ACOG, tần số cơn co trung bình (<code>B15_tb</code>) và <b>Tachysystole (B16)</b> chỉ được kết luận khi nhập đủ cả 3 cửa sổ 10 phút (<code>B15a</code>, <code>B15b</code>, <code>B15c</code>).
+    </div>`);
+  }
+
+  if (alerts.length) {
+    box.innerHTML = alerts.join('');
+    box.style.display = 'block';
+  } else {
+    box.innerHTML = '';
+    box.style.display = 'none';
+  }
 }
 
 function refreshLiveDerivedAndStatus(readOnlyMode = false) {
@@ -4420,6 +4559,8 @@ function refreshLiveDerivedAndStatus(readOnlyMode = false) {
     }).join('');
     document.getElementById('dx_' + sec).innerHTML = chips;
   });
+
+  renderClinicalAlertsB(norm, d);
 
   const tempRec = { data: norm, ctg_verified: tempCtgVerified };
   const comp = evaluateCompleteness(tempRec);
@@ -4483,39 +4624,87 @@ async function createApprovedCase(openInTabB) {
   return newRec;
 }
 
-async function openExistingCase(uid, targetTab) {
+function getDrivePreviewUrl(url) {
+  const s = String(url || '').trim();
+  if (!s) return '';
+  const mId = s.match(/[?&]id=([a-zA-Z0-9_-]+)/) || s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (mId && mId[1]) return `https://drive.google.com/thumbnail?id=${mId[1]}&sz=w1200`;
+  return s;
+}
+
+function renderEditorImagePreview() {
+  const imgWrap = document.getElementById('edImgWrap');
+  const thumbEl = document.getElementById('edImgThumb');
+  const zoomHint = document.getElementById('edImgZoomHint');
+  const driveLinkEl = document.getElementById('edImgDriveLink');
+
+  if (tempImgDataUrl) {
+    imgWrap.style.display = 'flex';
+    thumbEl.style.display = 'block';
+    thumbEl.src = tempImgDataUrl;
+    zoomHint.style.display = 'block';
+    if (tempImgDriveUrl) {
+      driveLinkEl.href = tempImgDriveUrl;
+      driveLinkEl.style.display = 'inline-block';
+    } else {
+      driveLinkEl.style.display = 'none';
+    }
+  } else if (tempImgDriveUrl) {
+    imgWrap.style.display = 'flex';
+    const previewUrl = getDrivePreviewUrl(tempImgDriveUrl);
+    thumbEl.style.display = 'block';
+    thumbEl.src = previewUrl;
+    zoomHint.style.display = 'block';
+    driveLinkEl.href = tempImgDriveUrl;
+    driveLinkEl.style.display = 'inline-block';
+  } else {
+    imgWrap.style.display = 'none';
+    driveLinkEl.style.display = 'none';
+  }
+}
+
+async function openExistingCase(uid, targetTab, bypassLock = false) {
   const rec = records.find(r => r.uid === uid);
   if (!rec) return;
 
   const lock = getActiveLockInfo(rec);
-  if (lock) {
-    const okProceed = confirm(`⚠️ CẢNH BÁO TRÙNG CA:\n\nBạn "${lock.user}" đang mở nhập hồ sơ ${rec.data.ma_hsba || rec.data.ma_nc} (cách đây ${lock.minsAgo} phút).\n\nBạn nên chọn ca khác để tránh đè dữ liệu của nhau! Vẫn cố tình mở ca này?`);
-    if (!okProceed) return;
+  if (lock && !bypassLock) {
+    openConfirmDeleteModal({
+      title: '🔒 Cảnh báo ca đang có người mở',
+      headerBg: '#b45309',
+      question: `Bạn "${lock.user}" đang mở nhập hồ sơ này (cách đây ${lock.minsAgo} phút).`,
+      targetHtml: `Hồ sơ: ${esc(rec.data.ma_hsba || rec.data.ma_nc)} · Người giữ ca: ${esc(lock.user)}`,
+      noteHtml: 'Bạn nên chọn ca rảnh khác để tránh ghi đè dữ liệu của nhau. Chỉ mở tiếp nếu bạn chắc chắn bạn kia đã thoát.',
+      confirmBtnText: '⚠️ Vẫn mở ca này',
+      confirmBtnClass: 'warn',
+      onConfirm: () => openExistingCase(uid, targetTab, true)
+    });
+    return;
   }
 
   activeUid = uid;
   hasUnsavedEditorChanges = false;
   tempImgDataUrl = rec.imgDataUrl || null;
   tempImgDriveUrl = rec.imgDriveUrl || '';
+  tempForceUploadImage = Boolean(rec.forceUploadImage);
   tempAiFields = [...(rec.ai_fields || [])];
   tempEditedFields = [...(rec.edited_fields || [])];
   tempCtgVerified = Boolean(rec.ctg_verified);
 
-  // Auto-fill all available hospital info + defaults into the form when opening a case
+  // Build display data with auto-filled hospital info + defaults without mutating rec.data until Saved
   const todayStr = new Date().toISOString().slice(0, 10);
   const userStr = (safeLocal.get('ctg_user_name') || '').trim();
-  const autoFilledData = normalizeData({
+  const formDisplayData = normalizeData({
     ...rec.data,
     khoa: (rec.data.khoa && rec.data.khoa.trim()) ? rec.data.khoa.trim() : 'Khoa sinh',
     ngay_thu_thap: rec.data.ngay_thu_thap || todayStr,
     nguoi_nhap: rec.data.nguoi_nhap || userStr
   });
-  rec.data = autoFilledData;
 
   const readOnlyMode = Boolean(rec.final_locked && !isAdminUnlocked);
 
   document.getElementById('edHeaderTitle').textContent =
-    `Hồ sơ: ${rec.data.ma_hsba || '(Chưa nhập HSBA)'} — ${rec.data.ma_nc || ''}${rec.data.ho_ten ? ' · ' + rec.data.ho_ten : ''} (${rec.data.khoa || 'Khoa sinh'})`;
+    `Hồ sơ: ${formDisplayData.ma_hsba || '(Chưa nhập HSBA)'} — ${formDisplayData.ma_nc || ''}${formDisplayData.ho_ten ? ' · ' + formDisplayData.ho_ten : ''} (${formDisplayData.khoa || 'Khoa sinh'})`;
 
   const chkLock = document.getElementById('chkFinalLock');
   if (chkLock) chkLock.checked = Boolean(rec.final_locked);
@@ -4523,22 +4712,16 @@ async function openExistingCase(uid, targetTab) {
   document.getElementById('btnTabBUpload').disabled = readOnlyMode;
   document.getElementById('btnSaveEditor').style.display = readOnlyMode ? 'none' : 'inline-flex';
 
-  const imgWrap = document.getElementById('edImgWrap');
-  if (tempImgDataUrl) {
-    imgWrap.style.display = 'block';
-    document.getElementById('edImgThumb').src = tempImgDataUrl;
-  } else {
-    imgWrap.style.display = 'none';
-  }
+  renderEditorImagePreview();
 
-  populateFormFromData(rec.data, readOnlyMode);
+  populateFormFromData(formDisplayData, readOnlyMode);
   refreshLiveDerivedAndStatus(readOnlyMode);
   switchTab(targetTab || 'A');
   document.getElementById('editorBackdrop').style.display = 'block';
 
   // Đánh dấu nhãn "📋 Từ HSBA" cho các ô hành chính đã tự động điền sẵn (Năm sinh, Ngày NV, Địa chỉ, Họ tên, Khoa)
   ['ho_ten', 'khoa', 'nam_sinh', 'ngay_nhap_vien', 'dia_chi', 'A1', 'A3'].forEach(fid => {
-    const val = rec.data[fid];
+    const val = formDisplayData[fid];
     const tagEl = document.getElementById('tag_' + fid);
     if (tagEl && !tagEl.innerHTML && val !== null && val !== undefined && val !== '') {
       tagEl.innerHTML = '<span class="tag-ai">📋 Từ HSBA</span>';
@@ -4547,10 +4730,10 @@ async function openExistingCase(uid, targetTab) {
 
   // Inform user if hospital info was auto-filled
   const prefilledParts = [];
-  if (rec.data.ho_ten) prefilledParts.push(`Họ tên: ${rec.data.ho_ten}`);
-  if (rec.data.nam_sinh) prefilledParts.push(`Năm sinh: ${rec.data.nam_sinh}`);
-  if (rec.data.ngay_nhap_vien) prefilledParts.push(`Ngày NV: ${rec.data.ngay_nhap_vien}`);
-  if (rec.data.dia_chi) prefilledParts.push(`Địa chỉ: ${rec.data.dia_chi}`);
+  if (formDisplayData.ho_ten) prefilledParts.push(`Họ tên: ${formDisplayData.ho_ten}`);
+  if (formDisplayData.nam_sinh) prefilledParts.push(`Năm sinh: ${formDisplayData.nam_sinh}`);
+  if (formDisplayData.ngay_nhap_vien) prefilledParts.push(`Ngày NV: ${formDisplayData.ngay_nhap_vien}`);
+  if (formDisplayData.dia_chi) prefilledParts.push(`Địa chỉ: ${formDisplayData.dia_chi}`);
   if (prefilledParts.length > 0) {
     showToast(`⚡ Tự động điền từ HSBA: ${prefilledParts.join(' · ')}`);
   }
@@ -4560,11 +4743,7 @@ async function openExistingCase(uid, targetTab) {
   }
 }
 
-async function closeEditor() {
-  if (hasUnsavedEditorChanges) {
-    const okLeave = confirm('⚠️ Bạn đã chỉnh sửa dữ liệu trong phiếu nhưng chưa bấm "💾 Lưu & Đồng bộ nhóm". Bạn có chắc chắn muốn đóng và bỏ qua các thay đổi chưa lưu?');
-    if (!okLeave) return;
-  }
+async function executeCloseEditor() {
   const uidToRelease = activeUid;
   activeUid = null;
   hasUnsavedEditorChanges = false;
@@ -4575,6 +4754,23 @@ async function closeEditor() {
       await sendCaseLockAction(rec, 'release');
     }
   }
+}
+
+async function closeEditor() {
+  if (hasUnsavedEditorChanges) {
+    openConfirmDeleteModal({
+      title: '⚠️ Chưa lưu thay đổi',
+      headerBg: '#b45309',
+      question: 'Bạn đã chỉnh sửa dữ liệu trong phiếu nhưng chưa bấm "💾 Lưu & Đồng bộ nhóm".',
+      targetHtml: '',
+      noteHtml: 'Nếu đóng ngay bây giờ, các thay đổi vừa nhập trong phiên này sẽ bị hủy bỏ.',
+      confirmBtnText: 'Đóng & Bỏ thay đổi',
+      confirmBtnClass: 'warn',
+      onConfirm: () => executeCloseEditor()
+    });
+    return;
+  }
+  await executeCloseEditor();
 }
 
 function switchTab(sec) {
@@ -4590,7 +4786,7 @@ function stepTab(dir) {
   if (idx >= 0 && idx < SECTIONS.length) switchTab(SECTIONS[idx]);
 }
 
-async function saveCurrentEditor() {
+async function saveCurrentEditor(bypassClinicalConfirm = false) {
   if (!activeUid) return;
   const idx = records.findIndex(r => r.uid === activeUid);
   if (idx === -1) return;
@@ -4601,6 +4797,36 @@ async function saveCurrentEditor() {
   }
 
   const norm = normalizeData(readRawFormValues());
+  const dCheck = deriveAll(norm);
+
+  if (!bypassClinicalConfirm) {
+    if (dCheck.IS_CAT3_ALERT === 1) {
+      openConfirmDeleteModal({
+        title: '🚨 Cảnh báo ca thuộc CTG Nhóm III (Tiêu chuẩn loại trừ)',
+        headerBg: '#991b1b',
+        question: 'Hồ sơ này có Mất DĐNT (B3=0) kèm nhịp giảm lặp lại hoặc nhịp chậm (<110) — thuộc CTG Nhóm III!',
+        targetHtml: `HSBA: ${esc(norm.ma_hsba || '(Chưa có)')} · B1=${norm.B1 ?? '?'} bpm, B3=0, B7=${norm.B7 ?? '?'}, B9=${norm.B9 ?? '?'}`,
+        noteHtml: 'Theo đề cương, CTG Nhóm III là <b>tiêu chuẩn loại trừ</b> khỏi mẫu CTG Nhóm II. Bạn nên bấm <b>"Hủy"</b> rồi chọn <b>"↩️ Loại trừ (Giữ lưu đồ)"</b> để đưa vào lưu đồ STROBE. Chỉ bấm <b>"Vẫn lưu"</b> nếu bạn muốn lưu tạm để kiểm tra lại.',
+        confirmBtnText: '⚠️ Vẫn lưu tạm hồ sơ này',
+        confirmBtnClass: 'warn',
+        onConfirm: () => saveCurrentEditor(true)
+      });
+      return;
+    }
+    if (norm.B3 === 2 && norm.B18a === 1) {
+      openConfirmDeleteModal({
+        title: '⚠️ Cảnh báo mâu thuẫn B3 & B18a',
+        headerBg: '#b45309',
+        question: 'Bạn đang chọn đồng thời B3 = 2 (DĐNT bình thường 6–25 bpm) và B18a = 1 (Có DĐNT tối thiểu kéo dài).',
+        targetHtml: `HSBA: ${esc(norm.ma_hsba || '(Chưa có)')} · B3 = 2 vs B18a = 1`,
+        noteHtml: 'Hai đặc điểm này mâu thuẫn nhau trên cùng đoạn CTG. Hãy bấm <b>"Hủy"</b> để chỉnh lại cho khớp, hoặc bấm <b>"Vẫn lưu"</b> nếu bạn chắc chắn.',
+        confirmBtnText: '⚠️ Vẫn lưu',
+        confirmBtnClass: 'warn',
+        onConfirm: () => saveCurrentEditor(true)
+      });
+      return;
+    }
+  }
   if (!norm.khoa) norm.khoa = 'Khoa sinh';
   if (!norm.ma_hsba) {
     alert('⚠️ Vui lòng nhập Mã bệnh án / HSBA (ô đầu tiên ở Phần A)!');
@@ -4624,6 +4850,7 @@ async function saveCurrentEditor() {
   records[idx].screen_status = 'approved';
   records[idx].imgDataUrl = tempImgDataUrl;
   records[idx].imgDriveUrl = tempImgDriveUrl;
+  records[idx].forceUploadImage = tempForceUploadImage;
   records[idx].ai_fields = tempAiFields;
   records[idx].edited_fields = tempEditedFields;
   if (isAdminUnlocked) {
@@ -4652,8 +4879,11 @@ async function demoteActiveCaseToExclude() {
   if (idx === -1) return;
   const rec = records[idx];
   rec.data = normalizeData(readRawFormValues());
+  const dDemote = deriveAll(rec.data);
   rec.screen_status = 'excluded';
-  rec.screen_reason = 'CTG < 30 phút hoặc mất tín hiệu / mờ';
+  rec.screen_reason = dDemote.IS_CAT3_ALERT === 1
+    ? 'CTG Nhóm III (Tiêu chuẩn loại trừ — Mất DĐNT kèm giảm muộn/biến đổi lặp lại hoặc nhịp chậm)'
+    : 'CTG < 30 phút hoặc mất tín hiệu / mờ';
   rec.editing_by = '';
   rec.editing_at = '';
   await dbPut(rec);
@@ -4679,7 +4909,7 @@ function triggerTabBUpload() {
   document.getElementById('tabBFileInput').click();
 }
 
-function resizeImageFile(file, maxW = 1600) {
+function resizeImageFile(file, maxW = 2400, quality = 0.92) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -4690,7 +4920,7 @@ function resizeImageFile(file, maxW = 1600) {
         const c = document.createElement('canvas');
         c.width = w; c.height = h;
         c.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(c.toDataURL('image/jpeg', 0.86));
+        resolve(c.toDataURL('image/jpeg', quality));
       };
       img.onerror = reject;
       img.src = e.target.result;
@@ -4713,13 +4943,13 @@ async function handleTabBImageUpload(event) {
   stEl.textContent = 'Đang tối ưu ảnh & phân tích biểu đồ CTG...';
 
   try {
-    const imgUrl = await resizeImageFile(file, 1600);
+    const imgUrl = await resizeImageFile(file, 2400, 0.92);
     tempImgDataUrl = imgUrl;
-    // Reset Drive URL because a brand-new image was uploaded; next save will upload this new image once
+    // Đánh dấu ảnh mới để tự động tải đè lên Drive khi Lưu
     tempImgDriveUrl = '';
+    tempForceUploadImage = true;
     hasUnsavedEditorChanges = true;
-    document.getElementById('edImgWrap').style.display = 'block';
-    document.getElementById('edImgThumb').src = imgUrl;
+    renderEditorImagePreview();
 
     const aiRes = await callGeminiCTG(imgUrl, key);
     const bKeys = ['B1','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','B14','B15a','B15b','B15c','B15_lien_quan','B18a','B18b','B17_no_stim','ghi_chu_ctg'];
@@ -4748,29 +4978,50 @@ async function handleTabBImageUpload(event) {
 
 async function callGeminiCTG(dataUrl, apiKey) {
   const base64Data = dataUrl.split(',')[1];
-  const prompt = `Bạn là bác sĩ sản khoa chuyên đọc băng ghi tim thai cơn co (CTG) theo phân loại 3 nhóm của ACOG (2009 / cập nhật 10/2025).
-Hãy phân tích hình ảnh CTG này (đánh giá đoạn 30 phút sớm nhất thuộc Nhóm II) và trả về DUY NHẤT JSON chuẩn (không markdown) với các khóa:
+  const prompt = `Bạn là bác sĩ sản khoa chuyên đọc băng ghi tim thai cơn co (CTG) theo hướng dẫn ACOG Clinical Practice Guideline No. 10 (cập nhật 10/2025).
+Hãy phân tích hình ảnh CTG (đoạn 30 phút sớm nhất thuộc Nhóm II) theo đúng QUY TRÌNH 4 BƯỚC CHUẨN HÓA dưới đây trước khi xuất kết quả:
+
+BƯỚC 1 — HIỆU CHUẨN TRỤC TỌA ĐỘ LƯỚI GIẤY:
+- Đọc nhãn vạch chia trục tung (thang 20 bpm/cm hay 30 bpm/cm; thường mỗi ô lưới nhỏ 1 mm = 5 bpm) để đo chính xác biên độ dao động nội tại (DĐNT): phân biệt kỹ DĐNT tối thiểu (<= 5 bpm, tức <= 1 ô nhỏ) với DĐNT bình thường (6–25 bpm).
+- Xác định tốc độ chạy giấy trục hoành (1 cm/phút hoặc 3 cm/phút; 10 phút = 10 cm nếu tốc độ 1 cm/phút, hoặc 30 cm nếu tốc độ 3 cm/phút) để chia đúng 3 cửa sổ 10 phút (0–10p, 10–20p, 20–30p) và đo chính xác thời gian nhịp giảm:
+  + Nhịp giảm kéo dài (B14): giảm >= 15 bpm kéo dài từ 2 phút đến < 10 phút.
+  + Lưu ý: Nếu nhịp giảm kéo dài >= 10 phút thì đó là THAY ĐỔI ĐƯỜNG CƠ BẢN (baseline change), KHÔNG đếm vào B14.
+
+BƯỚC 2 — KIỂM TRA CHẤT LƯỢNG KÊNH CƠN CO (TOCO):
+- Quan sát đường ghi cơn co tử cung (TOCO) ở phần dưới băng giấy.
+- Nếu kênh TOCO mất tín hiệu, phẳng hoàn toàn do tuột đầu dò hoặc mờ không thể đếm được cơn co: BẮT BUỘC trả về null cho B15a, B15b, B15c và B15_lien_quan (tuyệt đối không đoán mò) và ghi rõ trong ghi_chu_ctg.
+
+BƯỚC 3 — ĐỊNH LƯỢNG NHỊP GIẢM LẶP LẠI THEO ACOG (CỬA SỔ 20 PHÚT):
+- Nhịp giảm muộn lặp lại (B7 = 1): Xuất hiện nhịp giảm muộn đi kèm >= 50% số cơn co TRONG BẤT KỲ CỬA SỔ 20 PHÚT NÀO (ví dụ 0–20p hoặc 10–30p), không chỉ chia cho toàn bộ 30 phút.
+- Nhịp giảm biến đổi lặp lại (B9 = 1): Xuất hiện nhịp giảm biến đổi đi kèm >= 50% số cơn co TRONG BẤT KỲ CỬA SỔ 20 PHÚT NÀO.
+
+BƯỚC 4 — THẬN TRỌNG VỚI CÁC BIẾN CẦN BỐI CẢNH LÂM SÀNG (B18a, B18b):
+- Từ một ảnh chụp tĩnh 30 phút, không thể biết sản phụ có đang dùng thuốc giảm đau/an thần hay có sốt hay không.
+- Với B18a (DĐNT tối thiểu kéo dài không giải thích được): Nếu DĐNT tối thiểu xuất hiện suốt băng nhưng không có thông tin lâm sàng loại trừ thuốc/ngủ thai, mặc định trả về 9 (không đánh giá được) hoặc 0 và ghi chú nhắc bác sĩ đối chiếu bệnh án.
+- Với B18b (Chuyển NTT cơ bản từ bình thường sang nhanh không giải thích được): Chỉ trả về 1 nếu nhìn thấy rõ sự chuyển đường cơ bản từ 110–160 bpm lên > 160 bpm ngay trong ảnh; nếu không thấy chuyển tiếp trong ảnh thì mặc định trả về 9 (hoặc 0) và ghi chú để bác sĩ đối chiếu sốt/nhiễm trùng.
+
+Trả về DUY NHẤT JSON chuẩn (không markdown, không giải thích ngoài JSON) với các khóa:
 {
   "B1": <số nguyên nhịp tim thai cơ bản bpm, VD 140>,
   "B3": <0=Mất(phẳng), 1=Giảm/Tối thiểu(<=5bpm), 2=Bình thường/Trung bình(6-25bpm), 3=Tăng(>25bpm)>,
   "B4": <0=Không nhịp tăng, 1=Có nhịp tăng>,
   "B5": <0=Không giảm sớm, 1=Có giảm sớm>,
   "B6": <0=Không giảm muộn, 1=Có giảm muộn>,
-  "B7": <0=Không giảm muộn lặp lại, 1=Có giảm muộn lặp lại (>=50% cơn co)>,
+  "B7": <0=Không giảm muộn lặp lại, 1=Có giảm muộn lặp lại (>=50% cơn co trong bất kỳ cửa sổ 20p nào)>,
   "B8": <0=Không giảm biến đổi, 1=Có giảm biến đổi>,
-  "B9": <0=Không giảm biến đổi lặp lại, 1=Có giảm biến đổi lặp lại (>=50% cơn co)>,
+  "B9": <0=Không giảm biến đổi lặp lại, 1=Có giảm biến đổi lặp lại (>=50% cơn co trong bất kỳ cửa sổ 20p nào)>,
   "B10": <0=Không, 1=Có giảm biến đổi phục hồi chậm>,
   "B11": <0=Không, 1=Có giảm biến đổi có overshoot>,
   "B12": <0=Không, 1=Có giảm biến đổi có vai (shoulders)>,
-  "B14": <số nguyên số lần nhịp giảm kéo dài 2 đến <10 phút>,
-  "B15a": <số cơn co phút 0-10>,
-  "B15b": <số cơn co phút 10-20>,
-  "B15c": <số cơn co phút 20-30>,
-  "B15_lien_quan": <0=Không có nhịp giảm, 1=Đồng bộ cơn co, 2=Muộn sau đỉnh co, 3=Không hằng định, 4=Hỗn hợp>,
-  "B18a": <0=Không, 1=Có DĐNT tối thiểu kéo dài không giải thích được, 9=Không đánh giá được>,
-  "B18b": <0=Không, 1=Có chuyển NTT BT sang nhanh không giải thích được, 9=Không đánh giá được>,
+  "B14": <số nguyên số lần nhịp giảm kéo dài 2 đến <10 phút (không tính đoạn >=10p)>,
+  "B15a": <số nguyên cơn co phút 0-10, hoặc null nếu mất tín hiệu TOCO>,
+  "B15b": <số nguyên cơn co phút 10-20, hoặc null nếu mất tín hiệu TOCO>,
+  "B15c": <số nguyên cơn co phút 20-30, hoặc null nếu mất tín hiệu TOCO>,
+  "B15_lien_quan": <0=Không có nhịp giảm, 1=Đồng bộ cơn co, 2=Muộn sau đỉnh co, 3=Không hằng định, 4=Hỗn hợp, hoặc null nếu mất TOCO>,
+  "B18a": <0=Không, 1=Có DĐNT tối thiểu kéo dài không giải thích được, 9=Không đánh giá được từ ảnh tĩnh>,
+  "B18b": <0=Không, 1=Có chuyển NTT BT sang nhanh không giải thích được, 9=Không đánh giá được từ ảnh tĩnh>,
   "B17_no_stim": <0=Không, 1=Có không tăng sau kích thích>,
-  "ghi_chu_ctg": "<mô tả ngắn gọn bằng tiếng Việt đặc điểm chính của băng CTG>"
+  "ghi_chu_ctg": "<mô tả ngắn gọn bằng tiếng Việt: tốc độ giấy/thang đo nhận diện được, đặc điểm đường cơ bản, DĐNT, nhịp tăng/giảm, tình trạng kênh TOCO và lưu ý đối chiếu bệnh án>"
 }`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -4819,7 +5070,7 @@ function getAllExportCols() {
     'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'B12', 'B13', 'B14',
     'B15a', 'B15b', 'B15c', 'B15_tb', 'B16', 'B15_lien_quan',
     'B17_1', 'B17_2', 'B17_3', 'B17_4', 'B17_5', 'B17_6', 'B17_7', 'B17_8', 'B17_9', 'B17_10', 'B17_no_stim',
-    'B18a', 'B18b', 'B18', 'B19', 'B20_to_hop', 'HIGH_RISK', 'PROTECTIVE', 'ghi_chu_ctg',
+    'B18a', 'B18b', 'B18', 'B19', 'B20_to_hop', 'HIGH_RISK', 'PROTECTIVE', 'IS_CAT3_ALERT', 'ghi_chu_ctg',
     'C1_so', 'C1', 'con_so_con_ra', 'C2', 'C3_benh_nen', 'C3_chitiet',
     'D1', 'D1_tang_can', 'D2_tuan', 'D2_ngay', 'D2_text', 'D3', 'D4', 'D5', 'D5_tha_tk', 'D6', 'D10_gbs',
     'D7', 'D8_afi', 'D8', 'D12_doppler', 'D13_sa_khac', 'D9', 'D9_chitiet',
@@ -4858,6 +5109,7 @@ VARIABLE LABELS
   B18_DacDiemNguyCoCao 'B18. Đặc điểm CTG nguy cơ cao (HIGH_RISK)'
   B19_DacDiemBaoVe 'B19. Đặc điểm CTG bảo vệ (PROTECTIVE)'
   B20_ToHopNguyCoCaoBaoVe 'B20. Tổ hợp đặc điểm nguy cơ cao & bảo vệ'
+  B22_CanhBaoCTGNhomIII 'B22. Cảnh báo CTG Nhóm III (Tiêu chuẩn loại trừ)'
   C1_NhomSoLanMangThai 'C1. Số lần mang thai trước đây'
   C2_TienSuMoLayThai 'C2. Tiền sử mổ lấy thai'
   D1_CanNangLucVaoSinh 'D1. Cân nặng lúc vào sinh (kg)'
@@ -4895,11 +5147,25 @@ VALUE LABELS
   B3_DaoDongNoiTai 0 'Mất' 1 'Giảm/Tối thiểu' 2 'Bình thường' 3 'Tăng' /
   B4_NhipTang B7_NhipGiamMuonLapLai B9_NhipGiamBienDoiLapLai B13_CoNhipGiamKeoDai B16_Tachysystole B18_DacDiemNguyCoCao B19_DacDiemBaoVe F1_CoHoiSucTrongTuCung G7_ApgarPhut1Duoi7 G9_ApgarPhut5Duoi7 G10_CoHoiSucSoSinh 0 'Không' 1 'Có' /
   B20_ToHopNguyCoCaoBaoVe 0 'Không có cả hai' 1 'Chỉ có đặc điểm bảo vệ' 2 'Chỉ có đặc điểm nguy cơ cao' 3 'Có đồng thời cả hai' /
+  B22_CanhBaoCTGNhomIII 0 'Không (Đạt CTG Nhóm II)' 1 'Có (Thuộc CTG Nhóm III - Tiêu chuẩn loại trừ)' /
   F9_DienTienCTGSauXuTri 0 'Trở về nhóm I' 1 'Vẫn nhóm II/Tái diễn' 2 'Diễn tiến nhóm III' 9 'Không đủ dữ liệu' /
   F11_NhomThoiGian30Phut 0 '<= 30 phút' 1 '31 - 60 phút' 2 '61 - 90 phút' 3 '91 - 120 phút' 4 '> 120 phút' /
   F12_NhomThoiGian60Phut 0 '<= 60 phút' 1 '> 60 phút' /
+  C1_NhomSoLanMangThai 0 '0 lần (Con so)' 1 '1 lần' 2 '>= 2 lần' /
+  C2_TienSuMoLayThai 0 '0 lần' 1 '1 lần' 2 '>= 2 lần' /
+  D3_NhomTuoiThai 0 '37w0d - 38w6d' 1 '39w0d - 40w6d' 2 '41w0d - 41w6d' /
+  D4_NgoiThai 0 'Ngôi đầu' 1 'Ngôi mông' 2 'Ngôi khác / Hỗn hợp' /
+  D5_TienSanGiat D6_DaiThaoDuongThaiKy D7_ThaiGioiHanTangTruong E2_TangCoOxytocin E3_GiamDauNgoaiMangCung E6_MeSot 0 'Không' 1 'Có' /
+  D8_PhanNhomNuocOi 0 'Thiểu ối (AFI < 5 cm)' 1 'Bình thường (AFI 5-25 cm)' 2 'Đa ối (AFI > 25 cm)' /
+  D9_DayRonQuanCo 0 'Không' 1 '1 vòng' 2 '>= 2 vòng' /
+  E1_PhuongPhapKPCD 0 'Chuyển dạ tự nhiên' 1 'Lóc ối/Vê núm vú' 2 'Foley' 3 'Prostaglandin E2' 4 'Oxytocin' 5 'Khác' /
+  E4_TinhTrangOiLucCTG 0 'Ối còn' 1 'Ối vỡ tự nhiên' 2 'Bấm ối' /
+  E5_NuocOiLanPhanSu 0 'Trong / Không lẫn phân su' 1 'Có lẫn phân su / ối xanh' 9 'Chưa đánh giá (ối còn)' /
+  E7_NhiemTrungOi 0 'Không' 1 'Nghi ngờ' 2 'Chẩn đoán xác định' /
   G1_PhuongThucSinh 0 'Sinh thường' 1 'Sinh hỗ trợ' 2 'Mổ lấy thai' /
   G1a_SinhNgaAmDaoVsMLT 0 'Sinh ngả âm đạo' 1 'Mổ lấy thai' /
+  G5_NhomCanNangSoSinh 0 '< 2500g' 1 '2500 - <3500g' 2 '>= 3500g' /
+  G11_BienPhapHoiSucCaoNhat 0 'Chăm sóc thường quy' 1 'Hỗ trợ oxy' 2 'Thở CPAP' 3 'Thông khí áp lực dương' 4 'Đặt NKQ / Thở máy' 5 'Ép tim / Thuốc hồi sức' /
   G12_TinhTrangTreSauSinh 0 'Trẻ ổn định với mẹ' 1 'Chuyển khoa sơ sinh / Nhập NICU'.
 EXECUTE.`;
 }
@@ -5025,7 +5291,7 @@ function exportSPSS_CSV() {
 function exportBackupJSON() {
   if (!isAdminUnlocked) { alert('🔒 Chỉ Admin TRANG ĐOÀN mới được sao lưu dữ liệu!'); return; }
   if (!records.length) { alert('Chưa có dữ liệu!'); return; }
-  const payload = { version: 8.7, exported_at: new Date().toISOString(), records };
+  const payload = { version: 8.9, exported_at: new Date().toISOString(), records };
   const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -5101,7 +5367,7 @@ function clearAllData() {
     title: '🚨 CẢNH BÁO: XÓA TOÀN BỘ DỮ LIỆU',
     question: `Bạn có chắc chắn muốn XÓA SẠCH toàn bộ ${records.length} hồ sơ trên máy này không?`,
     targetHtml: `Tổng số hồ sơ sẽ bị xóa: ${records.length} ca (bao gồm cả danh sách Lọc HSBA & Hồ sơ đã duyệt)`,
-    noteHtml: '⚠️ <b>Cảnh báo quan trọng:</b> Hãy chắc chắn bạn đã bấm <b>"💾 Sao lưu toàn bộ"</b> hoặc <b>"📗 Xuất Excel"</b> trước khi thực hiện thao tác này!',
+    noteHtml: '⚠️ <b>Cảnh báo quan trọng:</b> Thao tác này xóa bộ nhớ đệm trên máy này (dữ liệu đã đồng bộ lên Google Sheet nhóm vẫn an toàn và sẽ tải lại khi đồng bộ). Hãy sao lưu trước nếu đang dùng offline!',
     onConfirm: async () => {
       for (const r of records) await dbDelete(r.uid);
       records = [];
