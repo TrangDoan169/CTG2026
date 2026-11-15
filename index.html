@@ -703,7 +703,7 @@
 <header id="mainHeader">
   <div class="header-inner">
     <div>
-      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.3</span></h1>
+      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.4</span></h1>
     </div>
     <div class="header-actions">
       <span class="sync-pill" id="liveSyncPill" title="Tự động đồng bộ mỗi 15 giây & ngay khi bấm Lưu">⚪ Chưa gắn link nhóm</span>
@@ -774,18 +774,223 @@
         <a href="https://aistudio.google.com/apikey" target="_blank" style="font-size:13.5px;color:var(--pri);font-weight:700;align-self:center;text-decoration:none">🔑 Lấy Gemini API Key ↗</a>
       </div>
       <details style="margin-top:12px">
-        <summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--pri-dark)">☁️ Mã Google Apps Script V3.2 (Hỗ trợ Phễu sàng lọc, Khóa chốt ca & Đồng bộ lệnh Xóa)</summary>
+        <summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--pri-dark)">☁️ Mã Google Apps Script V4.0 (Chuẩn tên biến SPSS 142 cột + Tự đổi tên cột cũ)</summary>
         <div class="hint" style="margin-top:6px;line-height:1.55">
-          Tạo Google Sheet mới → <b>Tiện ích mở rộng → Apps Script</b> → dán toàn bộ mã V3.2 dưới đây → <b>Triển khai → Quản lý các lần triển khai → Chỉnh sửa → Phiên bản mới → Triển khai</b> (Quyền truy cập: <b>Bất kỳ ai / Anyone</b>):
-          <div style="margin-top:6px"><button class="ghost sm" onclick="copyAppsScriptCode()">📋 Sao chép nhanh mã Apps Script V3.2</button></div>
-          <pre class="code-box" id="appsScriptBox">function readAllRows_(sheet) {
+          Tạo Google Sheet mới → <b>Tiện ích mở rộng → Apps Script</b> → dán toàn bộ mã V4.0 (chuẩn tên biến SPSS) dưới đây → <b>Triển khai → Quản lý các lần triển khai → Chỉnh sửa → Phiên bản mới → Triển khai</b> (Quyền truy cập: <b>Bất kỳ ai / Anyone</b>):
+          <div style="margin-top:6px"><button class="ghost sm" onclick="copyAppsScriptCode()">📋 Sao chép nhanh mã Apps Script V4.0 (SPSS)</button></div>
+          <pre class="code-box" id="appsScriptBox">var RENAME_MAP = {
+  &quot;uid&quot;: &quot;SYS_UID&quot;,
+  &quot;ma_nc&quot;: &quot;ID_MaNghienCuu&quot;,
+  &quot;ma_hsba&quot;: &quot;ID_MaHSBA&quot;,
+  &quot;ho_ten&quot;: &quot;ID_HoTenSanPhu&quot;,
+  &quot;nam_sinh&quot;: &quot;ID_NamSinhMe&quot;,
+  &quot;ngay_nhap_vien&quot;: &quot;ID_NgayNhapVien&quot;,
+  &quot;ngay_gio_ctg&quot;: &quot;ID_NgayGioCTG&quot;,
+  &quot;ngay_thu_thap&quot;: &quot;ID_NgayThuThap&quot;,
+  &quot;nguoi_nhap&quot;: &quot;ID_NguoiNhapLieu&quot;,
+
+  &quot;A1&quot;: &quot;A1_TuoiMe&quot;,
+  &quot;A2&quot;: &quot;A2_NhomTuoiMe&quot;,
+  &quot;dia_chi&quot;: &quot;A3a_DiaChiNguyenVan&quot;,
+  &quot;A3&quot;: &quot;A3_PhanNhomDiaChi&quot;,
+  &quot;khu_vuc_song&quot;: &quot;A3b_KhuVucSong&quot;,
+  &quot;A4&quot;: &quot;A4_NgheNghiep&quot;,
+  &quot;A5&quot;: &quot;A5_CanNangTruocMangThai&quot;,
+  &quot;A6&quot;: &quot;A6_ChieuCao&quot;,
+  &quot;A7&quot;: &quot;A7_BMITruocMangThai&quot;,
+  &quot;A8&quot;: &quot;A8_NhomBMITruocMangThai&quot;,
+
+  &quot;B1&quot;: &quot;B1_NhipTimThaiCoBan&quot;,
+  &quot;B2&quot;: &quot;B2_NhomNhipTimThaiCoBan&quot;,
+  &quot;B3&quot;: &quot;B3_DaoDongNoiTai&quot;,
+  &quot;B4&quot;: &quot;B4_NhipTang&quot;,
+  &quot;B5&quot;: &quot;B5_NhipGiamSom&quot;,
+  &quot;B6&quot;: &quot;B6_NhipGiamMuon&quot;,
+  &quot;B7&quot;: &quot;B7_NhipGiamMuonLapLai&quot;,
+  &quot;B8&quot;: &quot;B8_NhipGiamBienDoi&quot;,
+  &quot;B9&quot;: &quot;B9_NhipGiamBienDoiLapLai&quot;,
+  &quot;B10&quot;: &quot;B10_GiamBienDoiPhucHoiCham&quot;,
+  &quot;B11&quot;: &quot;B11_GiamBienDoiOvershoot&quot;,
+  &quot;B12&quot;: &quot;B12_GiamBienDoiCoVai&quot;,
+  &quot;B13&quot;: &quot;B13_CoNhipGiamKeoDai&quot;,
+  &quot;B14&quot;: &quot;B14_SoLanNhipGiamKeoDai&quot;,
+  &quot;B15a&quot;: &quot;B15a_SoConCoPhut0_10&quot;,
+  &quot;B15b&quot;: &quot;B15b_SoConCoPhut10_20&quot;,
+  &quot;B15c&quot;: &quot;B15c_SoConCoPhut20_30&quot;,
+  &quot;B15_tb&quot;: &quot;B15_TrungBinhConCo10Phut&quot;,
+  &quot;B16&quot;: &quot;B16_Tachysystole&quot;,
+  &quot;B15_lien_quan&quot;: &quot;B15d_LienQuanGiamVoiConCo&quot;,
+  &quot;B17_1&quot;: &quot;B17_1_ChamKhongMatDDNT&quot;,
+  &quot;B17_2&quot;: &quot;B17_2_NhipNhanh&quot;,
+  &quot;B17_3&quot;: &quot;B17_3_DDNTGiam&quot;,
+  &quot;B17_4&quot;: &quot;B17_4_MatDDNTDonDoc&quot;,
+  &quot;B17_5&quot;: &quot;B17_5_DDNTTang&quot;,
+  &quot;B17_6&quot;: &quot;B17_6_BienDoiTaiDienDDNTGiamBT&quot;,
+  &quot;B17_7&quot;: &quot;B17_7_GiamKeoDai&quot;,
+  &quot;B17_8&quot;: &quot;B17_8_MuonTaiDienDDNTGiamBT&quot;,
+  &quot;B17_9&quot;: &quot;B17_9_BienDoiDacDiemKhac&quot;,
+  &quot;B17_10&quot;: &quot;B17_10_Tu2NhipGiamKeoDai&quot;,
+  &quot;B17_no_stim&quot;: &quot;B17_11_KhongTangSauKichThich&quot;,
+  &quot;B18a&quot;: &quot;B18a_DDNTToiThieuKeoDai&quot;,
+  &quot;B18b&quot;: &quot;B18b_ChuyenNTTBTsangNhanh&quot;,
+  &quot;B18&quot;: &quot;B18_DacDiemNguyCoCao&quot;,
+  &quot;B19&quot;: &quot;B19_DacDiemBaoVe&quot;,
+  &quot;B20_to_hop&quot;: &quot;B20_ToHopNguyCoCaoBaoVe&quot;,
+  &quot;HIGH_RISK&quot;: &quot;B18_HIGH_RISK&quot;,
+  &quot;PROTECTIVE&quot;: &quot;B19_PROTECTIVE&quot;,
+  &quot;ghi_chu_ctg&quot;: &quot;B21_GhiChuDocCTG&quot;,
+
+  &quot;C1_so&quot;: &quot;C1a_SoLanMangThaiTruoc&quot;,
+  &quot;C1&quot;: &quot;C1_NhomSoLanMangThai&quot;,
+  &quot;con_so_con_ra&quot;: &quot;C1b_PhanLoaiConSoConRa&quot;,
+  &quot;C2&quot;: &quot;C2_TienSuMoLayThai&quot;,
+  &quot;C3_benh_nen&quot;: &quot;C3_BenhLyNenTruocMangThai&quot;,
+  &quot;C3_chitiet&quot;: &quot;C3a_ChiTietBenhLyNen&quot;,
+
+  &quot;D1&quot;: &quot;D1_CanNangLucVaoSinh&quot;,
+  &quot;D1_tang_can&quot;: &quot;D1a_MucTangCanThaiKy&quot;,
+  &quot;D2_tuan&quot;: &quot;D2a_TuoiThaiTuan&quot;,
+  &quot;D2_ngay&quot;: &quot;D2b_TuoiThaiNgay&quot;,
+  &quot;D2_text&quot;: &quot;D2_TuoiThaiChuoi&quot;,
+  &quot;D3&quot;: &quot;D3_NhomTuoiThai&quot;,
+  &quot;D4&quot;: &quot;D4_NgoiThai&quot;,
+  &quot;D5&quot;: &quot;D5_TienSanGiat&quot;,
+  &quot;D5_tha_tk&quot;: &quot;D5a_TangHuyetApThaiKy&quot;,
+  &quot;D6&quot;: &quot;D6_DaiThaoDuongThaiKy&quot;,
+  &quot;D10_gbs&quot;: &quot;D10_XetNghiemGBS&quot;,
+  &quot;D7&quot;: &quot;D7_ThaiGioiHanTangTruong&quot;,
+  &quot;D8_afi&quot;: &quot;D8a_ChiSoOiAFI&quot;,
+  &quot;D8&quot;: &quot;D8_PhanNhomNuocOi&quot;,
+  &quot;D12_doppler&quot;: &quot;D12_BatThuongDoppler&quot;,
+  &quot;D13_sa_khac&quot;: &quot;D13_BatThuongSieuAmKhac&quot;,
+  &quot;D9&quot;: &quot;D9_DayRonQuanCo&quot;,
+  &quot;D9_chitiet&quot;: &quot;D9a_BatThuongDayRonKhac&quot;,
+
+  &quot;E1&quot;: &quot;E1_PhuongPhapKPCD&quot;,
+  &quot;E1_co_kpcd&quot;: &quot;E1a_CoKhoiPhatChuyenDa&quot;,
+  &quot;E1_khac&quot;: &quot;E1b_GhiRoKPCDKhac&quot;,
+  &quot;E2&quot;: &quot;E2_TangCoOxytocin&quot;,
+  &quot;E3&quot;: &quot;E3_GiamDauNgoaiMangCung&quot;,
+  &quot;E8_gd_cd&quot;: &quot;E8_GiaiDoanChuyenDa&quot;,
+  &quot;E4&quot;: &quot;E4_TinhTrangOiLucCTG&quot;,
+  &quot;E4_gio_vo_oi&quot;: &quot;E4a_ThoiGianVoOiDenSinh&quot;,
+  &quot;E5&quot;: &quot;E5_NuocOiLanPhanSu&quot;,
+  &quot;E6_nhietdo&quot;: &quot;E6a_NhietDoMe&quot;,
+  &quot;E6&quot;: &quot;E6_MeSot&quot;,
+  &quot;E7&quot;: &quot;E7_NhiemTrungOi&quot;,
+
+  &quot;F1&quot;: &quot;F1_CoHoiSucTrongTuCung&quot;,
+  &quot;F2&quot;: &quot;F2_ThayDoiTuTheMe&quot;,
+  &quot;F3&quot;: &quot;F3_ThoOxy&quot;,
+  &quot;F4&quot;: &quot;F4_GiamNgungOxytocin&quot;,
+  &quot;F5&quot;: &quot;F5_TruyenDich&quot;,
+  &quot;F6&quot;: &quot;F6_XuTriTutHuyetApMe&quot;,
+  &quot;F7&quot;: &quot;F7_TruyenOi&quot;,
+  &quot;F8&quot;: &quot;F8_SuDungTerbutaline&quot;,
+  &quot;F8_khac&quot;: &quot;F8a_BienPhapHoiSucKhac&quot;,
+  &quot;F9&quot;: &quot;F9_DienTienCTGSauXuTri&quot;,
+  &quot;F9_chitiet&quot;: &quot;F9a_ChiTietDienTienCTG&quot;,
+  &quot;F10_tg_ctg&quot;: &quot;F10a_GioBatDauCTGII&quot;,
+  &quot;G0_tg_sinh&quot;: &quot;F10b_GioSinh&quot;,
+  &quot;F10_phut&quot;: &quot;F10_ThoiGianCTGIIDenSinh&quot;,
+  &quot;F11_nhom_30p&quot;: &quot;F11_NhomThoiGian30Phut&quot;,
+  &quot;F12_nhom_60p&quot;: &quot;F12_NhomThoiGian60Phut&quot;,
+
+  &quot;G1&quot;: &quot;G1_PhuongThucSinh&quot;,
+  &quot;G1_chung&quot;: &quot;G1a_SinhNgaAmDaoVsMLT&quot;,
+  &quot;G2&quot;: &quot;G2_LyDoSinhHoTro&quot;,
+  &quot;G3&quot;: &quot;G3_LyDoMoLayThai&quot;,
+  &quot;G13_gioi_tinh&quot;: &quot;G13_GioiTinhSoSinh&quot;,
+  &quot;G4&quot;: &quot;G4_CanNangSoSinh&quot;,
+  &quot;G5&quot;: &quot;G5_NhomCanNangSoSinh&quot;,
+  &quot;G5_phuluc&quot;: &quot;G5a_NhomCanNangPhuLuc&quot;,
+  &quot;G6&quot;: &quot;G6_ApgarPhut1&quot;,
+  &quot;G7&quot;: &quot;G7_ApgarPhut1Duoi7&quot;,
+  &quot;G8&quot;: &quot;G8_ApgarPhut5&quot;,
+  &quot;G9&quot;: &quot;G9_ApgarPhut5Duoi7&quot;,
+  &quot;G10&quot;: &quot;G10_CoHoiSucSoSinh&quot;,
+  &quot;G11&quot;: &quot;G11_BienPhapHoiSucCaoNhat&quot;,
+  &quot;G12&quot;: &quot;G12_TinhTrangTreSauSinh&quot;,
+  &quot;G14_bc_ss&quot;: &quot;G14_BienChungSoSinhKhac&quot;,
+
+  &quot;found_via_paper&quot;: &quot;QA_PhatHienQuaHSGiay&quot;,
+  &quot;ctg_verified&quot;: &quot;QA_DaDuyetCTG&quot;,
+  &quot;qa_10pct&quot;: &quot;QA_KiemTraCheo10Pct&quot;,
+  &quot;final_locked&quot;: &quot;QA_DaKhoaChot&quot;,
+  &quot;screen_status&quot;: &quot;QA_TrangThaiSangLoc&quot;,
+  &quot;screen_reason&quot;: &quot;QA_LyDoLoaiSTROBE&quot;,
+  &quot;screen_note&quot;: &quot;QA_GhiChuSangLoc&quot;,
+  &quot;doc_ctg_group&quot;: &quot;QA_BSGhiNhanNhomCTG&quot;,
+  &quot;has_risk&quot;: &quot;QA_CoYeuToNguyCo&quot;,
+  &quot;risk_detail&quot;: &quot;QA_ChiTietYeuToNguyCo&quot;,
+  &quot;trang_thai_nhap&quot;: &quot;QA_TrangThaiNhapLieu&quot;,
+  &quot;last_edited_by&quot;: &quot;SYS_NguoiSuaCuoi&quot;,
+  &quot;editing_by&quot;: &quot;SYS_DangMoSuaBoi&quot;,
+  &quot;editing_at&quot;: &quot;SYS_ThoiDiemMoSua&quot;,
+  &quot;link_anh_drive&quot;: &quot;SYS_LinkAnhCTGDrive&quot;,
+  &quot;cap_nhat_luc&quot;: &quot;SYS_CapNhatLuc&quot;
+};
+
+var REVERSE_RENAME_MAP = (function() {
+  var rev = {};
+  Object.keys(RENAME_MAP).forEach(function(k) { rev[RENAME_MAP[k]] = k; });
+  return rev;
+})();
+
+var PREFERRED_HEADER_ORDER = Object.keys(RENAME_MAP).map(function(k) { return RENAME_MAP[k]; });
+
+function doiTenCotSangChuanSPSS() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  renameOldHeadersToSpss_(sheet);
+  if (sheet.getLastRow() &gt;= 1) {
+    var headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+    headerRange.setFontWeight(&quot;bold&quot;).setBackground(&quot;#e8f0fe&quot;);
+    sheet.setFrozenRows(1);
+  }
+}
+
+function renameOldHeadersToSpss_(sheet) {
+  if (sheet.getLastRow() === 0 || sheet.getLastColumn() === 0) return;
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var changed = false;
+  var newHeaders = headers.map(function(h) {
+    var key = String(h || &quot;&quot;).trim();
+    if (RENAME_MAP[key]) {
+      changed = true;
+      return RENAME_MAP[key];
+    }
+    return key;
+  });
+  if (changed) {
+    sheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
+  }
+}
+
+function normalizeRowKeysToSpss_(rowObj) {
+  var out = {};
+  Object.keys(rowObj || {}).forEach(function(k) {
+    var mappedKey = RENAME_MAP[k] || k;
+    out[mappedKey] = rowObj[k];
+  });
+  return out;
+}
+
+function readAllRows_(sheet) {
+  renameOldHeadersToSpss_(sheet);
   var data = sheet.getDataRange().getValues();
   if (data.length &lt;= 1) return [];
   var headers = data[0];
   var rows = [];
   for (var i = 1; i &lt; data.length; i++) {
     var obj = {};
-    for (var j = 0; j &lt; headers.length; j++) obj[headers[j]] = data[i][j];
+    for (var j = 0; j &lt; headers.length; j++) {
+      var colName = String(headers[j] || &quot;&quot;).trim();
+      if (!colName) continue;
+      obj[colName] = data[i][j];
+      if (REVERSE_RENAME_MAP[colName]) {
+        obj[REVERSE_RENAME_MAP[colName]] = data[i][j];
+      }
+    }
     rows.push(obj);
   }
   return rows;
@@ -797,7 +1002,7 @@ function jsonOut_(obj) {
 
 function doGet(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  return jsonOut_({ status: "ok", serverTime: new Date().toISOString(), rows: readAllRows_(sheet) });
+  return jsonOut_({ status: &quot;ok&quot;, serverTime: new Date().toISOString(), rows: readAllRows_(sheet) });
 }
 
 function doPost(e) {
@@ -805,92 +1010,105 @@ function doPost(e) {
   lock.waitLock(20000);
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    renameOldHeadersToSpss_(sheet);
     var body = JSON.parse(e.postData.contents);
-    var action = body.action || "upsert";
+    var action = body.action || &quot;upsert&quot;;
 
-    if (action === "clear_all") {
+    if (action === &quot;clear_all&quot;) {
       if (sheet.getLastRow() &gt; 1) {
         sheet.deleteRows(2, sheet.getLastRow() - 1);
       }
-      return jsonOut_({ status: "ok", serverTime: new Date().toISOString(), rows: [] });
+      return jsonOut_({ status: &quot;ok&quot;, serverTime: new Date().toISOString(), rows: [] });
     }
 
-    if (action === "delete") {
+    if (action === &quot;delete&quot;) {
       if (sheet.getLastRow() &gt; 1) {
         var allData = sheet.getDataRange().getValues();
         var headers = allData[0];
-        var uidCol = headers.indexOf("uid");
-        var hsbaCol = headers.indexOf("ma_hsba");
-        var targetHsba = String(body.ma_hsba || "").trim().toLowerCase();
+        var uidCol = headers.indexOf(&quot;SYS_UID&quot;);
+        var hsbaCol = headers.indexOf(&quot;ID_MaHSBA&quot;);
+        var targetHsba = String(body.ID_MaHSBA || body.ma_hsba || &quot;&quot;).trim().toLowerCase();
+        var targetUid = body.SYS_UID || body.uid || &quot;&quot;;
         for (var r = allData.length - 1; r &gt;= 1; r--) {
-          if ((uidCol !== -1 &amp;&amp; body.uid &amp;&amp; allData[r][uidCol] === body.uid) ||
+          if ((uidCol !== -1 &amp;&amp; targetUid &amp;&amp; allData[r][uidCol] === targetUid) ||
               (hsbaCol !== -1 &amp;&amp; targetHsba &amp;&amp; String(allData[r][hsbaCol]).trim().toLowerCase() === targetHsba)) {
             sheet.deleteRow(r + 1);
             break;
           }
         }
       }
-      return jsonOut_({ status: "ok", serverTime: new Date().toISOString(), rows: readAllRows_(sheet) });
+      return jsonOut_({ status: &quot;ok&quot;, serverTime: new Date().toISOString(), rows: readAllRows_(sheet) });
     }
 
-    if (action === "claim" || action === "release") {
+    if (action === &quot;claim&quot; || action === &quot;release&quot;) {
       var headers = sheet.getLastRow() === 0 ? [] : sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-      ["uid", "ma_hsba", "editing_by", "editing_at"].forEach(function(k) {
+      [&quot;SYS_UID&quot;, &quot;ID_MaHSBA&quot;, &quot;SYS_DangMoSuaBoi&quot;, &quot;SYS_ThoiDiemMoSua&quot;].forEach(function(k) {
         if (headers.indexOf(k) === -1) headers.push(k);
       });
       if (sheet.getLastRow() === 0) sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
       else if (headers.length &gt; sheet.getLastColumn()) sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
       var allData = sheet.getDataRange().getValues();
-      var uidCol = headers.indexOf("uid");
-      var hsbaCol = headers.indexOf("ma_hsba");
-      var edByCol = headers.indexOf("editing_by");
-      var edAtCol = headers.indexOf("editing_at");
-      var targetHsba = String(body.ma_hsba || "").trim().toLowerCase();
+      var uidCol = headers.indexOf(&quot;SYS_UID&quot;);
+      var hsbaCol = headers.indexOf(&quot;ID_MaHSBA&quot;);
+      var edByCol = headers.indexOf(&quot;SYS_DangMoSuaBoi&quot;);
+      var edAtCol = headers.indexOf(&quot;SYS_ThoiDiemMoSua&quot;);
+      var targetHsba = String(body.ID_MaHSBA || body.ma_hsba || &quot;&quot;).trim().toLowerCase();
+      var targetUid = body.SYS_UID || body.uid || &quot;&quot;;
       for (var r = 1; r &lt; allData.length; r++) {
-        if ((uidCol !== -1 &amp;&amp; allData[r][uidCol] === body.uid) ||
+        if ((uidCol !== -1 &amp;&amp; targetUid &amp;&amp; allData[r][uidCol] === targetUid) ||
             (hsbaCol !== -1 &amp;&amp; targetHsba &amp;&amp; String(allData[r][hsbaCol]).trim().toLowerCase() === targetHsba)) {
-          sheet.getRange(r + 1, edByCol + 1).setValue(action === "claim" ? (body.user || "") : "");
-          sheet.getRange(r + 1, edAtCol + 1).setValue(action === "claim" ? new Date().toISOString() : "");
+          sheet.getRange(r + 1, edByCol + 1).setValue(action === &quot;claim&quot; ? (body.user || &quot;&quot;) : &quot;&quot;);
+          sheet.getRange(r + 1, edAtCol + 1).setValue(action === &quot;claim&quot; ? new Date().toISOString() : &quot;&quot;);
           break;
         }
       }
-      return jsonOut_({ status: "ok", serverTime: new Date().toISOString(), rows: readAllRows_(sheet) });
+      return jsonOut_({ status: &quot;ok&quot;, serverTime: new Date().toISOString(), rows: readAllRows_(sheet) });
     }
 
-    var incomingRows = action === "bulk_upsert" ? (body.rows || []) : [body.row];
+    var rawRows = action === &quot;bulk_upsert&quot; ? (body.rows || []) : [body.row];
+    var incomingRows = rawRows.map(normalizeRowKeysToSpss_);
+
     if (body.imgBase64 &amp;&amp; incomingRows[0]) {
-      var folder = DriveApp.getFoldersByName("CTG_ACOG2025_Images").hasNext()
-        ? DriveApp.getFoldersByName("CTG_ACOG2025_Images").next()
-        : DriveApp.createFolder("CTG_ACOG2025_Images");
-      var fileName = (incomingRows[0].ma_hsba || incomingRows[0].ma_nc || "CTG") + ".jpg";
-      var blob = Utilities.newBlob(Utilities.base64Decode(body.imgBase64.split(",")[1]), "image/jpeg", fileName);
+      var folder = DriveApp.getFoldersByName(&quot;CTG_ACOG2025_Images&quot;).hasNext()
+        ? DriveApp.getFoldersByName(&quot;CTG_ACOG2025_Images&quot;).next()
+        : DriveApp.createFolder(&quot;CTG_ACOG2025_Images&quot;);
+      var fileName = (incomingRows[0].ID_MaHSBA || incomingRows[0].ID_MaNghienCuu || &quot;CTG&quot;) + &quot;.jpg&quot;;
+      var blob = Utilities.newBlob(Utilities.base64Decode(body.imgBase64.split(&quot;,&quot;)[1]), &quot;image/jpeg&quot;, fileName);
       var file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      incomingRows[0].link_anh_drive = file.getUrl();
+      incomingRows[0].SYS_LinkAnhCTGDrive = file.getUrl();
     }
 
-    var headers = sheet.getLastRow() === 0 ? [] : sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    var headerChanged = false;
+    var headers = sheet.getLastRow() === 0
+      ? PREFERRED_HEADER_ORDER.slice()
+      : sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var headerChanged = (sheet.getLastRow() === 0);
+
     incomingRows.forEach(function(rowObj) {
       Object.keys(rowObj).forEach(function(k) {
         if (headers.indexOf(k) === -1) { headers.push(k); headerChanged = true; }
       });
     });
-    if (sheet.getLastRow() === 0 || headerChanged) {
+    if (headerChanged) {
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     }
 
     var allData = sheet.getDataRange().getValues();
-    var uidCol = headers.indexOf("uid");
-    var hsbaCol = headers.indexOf("ma_hsba");
-    var forceFields = ["editing_by","editing_at","ctg_verified","qa_10pct","final_locked","screen_status","screen_reason","screen_note","doc_ctg_group","has_risk","risk_detail","found_via_paper","trang_thai_nhap","cap_nhat_luc","last_edited_by"];
+    var uidCol = headers.indexOf(&quot;SYS_UID&quot;);
+    var hsbaCol = headers.indexOf(&quot;ID_MaHSBA&quot;);
+    var forceFields = [
+      &quot;SYS_DangMoSuaBoi&quot;, &quot;SYS_ThoiDiemMoSua&quot;, &quot;QA_DaDuyetCTG&quot;, &quot;QA_KiemTraCheo10Pct&quot;,
+      &quot;QA_DaKhoaChot&quot;, &quot;QA_TrangThaiSangLoc&quot;, &quot;QA_LyDoLoaiSTROBE&quot;, &quot;QA_GhiChuSangLoc&quot;,
+      &quot;QA_BSGhiNhanNhomCTG&quot;, &quot;QA_CoYeuToNguyCo&quot;, &quot;QA_ChiTietYeuToNguyCo&quot;, &quot;QA_PhatHienQuaHSGiay&quot;,
+      &quot;QA_TrangThaiNhapLieu&quot;, &quot;SYS_CapNhatLuc&quot;, &quot;SYS_NguoiSuaCuoi&quot;
+    ];
 
     incomingRows.forEach(function(rowObj) {
       var targetRow = -1;
-      var normHsba = String(rowObj.ma_hsba || "").trim().toLowerCase();
+      var normHsba = String(rowObj.ID_MaHSBA || &quot;&quot;).trim().toLowerCase();
       for (var r = 1; r &lt; allData.length; r++) {
-        if ((uidCol !== -1 &amp;&amp; rowObj.uid &amp;&amp; allData[r][uidCol] === rowObj.uid) ||
+        if ((uidCol !== -1 &amp;&amp; rowObj.SYS_UID &amp;&amp; allData[r][uidCol] === rowObj.SYS_UID) ||
             (hsbaCol !== -1 &amp;&amp; normHsba &amp;&amp; String(allData[r][hsbaCol]).trim().toLowerCase() === normHsba)) {
           targetRow = r + 1; break;
         }
@@ -901,21 +1119,21 @@ function doPost(e) {
           var incomingVal = rowObj[h];
           var oldVal = existingRow[idx];
           if (forceFields.indexOf(h) !== -1) {
-            return incomingVal !== undefined ? incomingVal : (oldVal !== undefined ? oldVal : "");
+            return incomingVal !== undefined ? incomingVal : (oldVal !== undefined ? oldVal : &quot;&quot;);
           }
-          if (incomingVal !== undefined &amp;&amp; incomingVal !== "" &amp;&amp; incomingVal !== null) return incomingVal;
-          return oldVal !== undefined ? oldVal : "";
+          if (incomingVal !== undefined &amp;&amp; incomingVal !== &quot;&quot; &amp;&amp; incomingVal !== null) return incomingVal;
+          return oldVal !== undefined ? oldVal : &quot;&quot;;
         });
         sheet.getRange(targetRow, 1, 1, mergedValues.length).setValues([mergedValues]);
         allData[targetRow - 1] = mergedValues;
       } else {
-        var newValues = headers.map(function(h) { return rowObj[h] !== undefined ? rowObj[h] : ""; });
+        var newValues = headers.map(function(h) { return rowObj[h] !== undefined ? rowObj[h] : &quot;&quot;; });
         sheet.appendRow(newValues);
         allData.push(newValues);
       }
     });
 
-    return jsonOut_({ status: "ok", serverTime: new Date().toISOString(), rows: readAllRows_(sheet) });
+    return jsonOut_({ status: &quot;ok&quot;, serverTime: new Date().toISOString(), rows: readAllRows_(sheet) });
   } finally {
     lock.releaseLock();
   }
@@ -1588,7 +1806,7 @@ const DERIVED_DEFS = {
     { id: 'A2', label: 'A2. Nhóm tuổi mẹ', opts: [[0,'0 (<20t)'],[1,'1 (20–34t)'],[2,'2 (≥35t)']] },
     { id: 'A7', label: 'A7. BMI trước mang thai (kg/m²)', isNum: true },
     { id: 'A8', label: 'A8. Nhóm BMI trước mang thai', opts: [[0,'0 (Nhẹ cân <18.5)'],[1,'1 (BT 18.5–22.9)'],[2,'2 (Thừa cân 23–24.9)'],[3,'3 (Béo phì ≥25)']] },
-    { id: 'khu_vuc_song', label: 'khu_vuc_song (0=NT, 1=TT)', opts: [[0,'0 (Nông thôn)'],[1,'1 (Thành thị)']] }
+    { id: 'khu_vuc_song', label: 'A3b. Khu vực sống (0=NT, 1=TT)', opts: [[0,'0 (Nông thôn)'],[1,'1 (Thành thị)']] }
   ],
   B: [
     { id: 'B2', label: 'B2. Nhóm NTT cơ bản', opts: [[0,'0 (Chậm <110)'],[1,'1 (BT 110–160)'],[2,'2 (Nhanh >160)']] },
@@ -2212,7 +2430,7 @@ function copyShareLink() {
 function copyAppsScriptCode() {
   const code = document.getElementById('appsScriptBox').textContent;
   navigator.clipboard.writeText(code)
-    .then(() => showToast('📋 Đã sao chép mã Apps Script V3.2!'))
+    .then(() => showToast('📋 Đã sao chép mã Apps Script V4.0 (Chuẩn SPSS)!'))
     .catch(() => alert('Hãy bôi đen và copy đoạn mã trong khung.'));
 }
 
@@ -2228,10 +2446,186 @@ function removeFromOfflineQueue(uid) {
   localStorage.setItem('ctg_offline_queue', JSON.stringify(q));
 }
 
+const SPSS_COL_MAP = {
+  uid: 'SYS_UID',
+  ma_nc: 'ID_MaNghienCuu',
+  ma_hsba: 'ID_MaHSBA',
+  ho_ten: 'ID_HoTenSanPhu',
+  nam_sinh: 'ID_NamSinhMe',
+  ngay_nhap_vien: 'ID_NgayNhapVien',
+  ngay_gio_ctg: 'ID_NgayGioCTG',
+  ngay_thu_thap: 'ID_NgayThuThap',
+  nguoi_nhap: 'ID_NguoiNhapLieu',
+
+  A1: 'A1_TuoiMe',
+  A2: 'A2_NhomTuoiMe',
+  dia_chi: 'A3a_DiaChiNguyenVan',
+  A3: 'A3_PhanNhomDiaChi',
+  khu_vuc_song: 'A3b_KhuVucSong',
+  A4: 'A4_NgheNghiep',
+  A5: 'A5_CanNangTruocMangThai',
+  A6: 'A6_ChieuCao',
+  A7: 'A7_BMITruocMangThai',
+  A8: 'A8_NhomBMITruocMangThai',
+
+  B1: 'B1_NhipTimThaiCoBan',
+  B2: 'B2_NhomNhipTimThaiCoBan',
+  B3: 'B3_DaoDongNoiTai',
+  B4: 'B4_NhipTang',
+  B5: 'B5_NhipGiamSom',
+  B6: 'B6_NhipGiamMuon',
+  B7: 'B7_NhipGiamMuonLapLai',
+  B8: 'B8_NhipGiamBienDoi',
+  B9: 'B9_NhipGiamBienDoiLapLai',
+  B10: 'B10_GiamBienDoiPhucHoiCham',
+  B11: 'B11_GiamBienDoiOvershoot',
+  B12: 'B12_GiamBienDoiCoVai',
+  B13: 'B13_CoNhipGiamKeoDai',
+  B14: 'B14_SoLanNhipGiamKeoDai',
+  B15a: 'B15a_SoConCoPhut0_10',
+  B15b: 'B15b_SoConCoPhut10_20',
+  B15c: 'B15c_SoConCoPhut20_30',
+  B15_tb: 'B15_TrungBinhConCo10Phut',
+  B16: 'B16_Tachysystole',
+  B15_lien_quan: 'B15d_LienQuanGiamVoiConCo',
+  B17_1: 'B17_1_ChamKhongMatDDNT',
+  B17_2: 'B17_2_NhipNhanh',
+  B17_3: 'B17_3_DDNTGiam',
+  B17_4: 'B17_4_MatDDNTDonDoc',
+  B17_5: 'B17_5_DDNTTang',
+  B17_6: 'B17_6_BienDoiTaiDienDDNTGiamBT',
+  B17_7: 'B17_7_GiamKeoDai',
+  B17_8: 'B17_8_MuonTaiDienDDNTGiamBT',
+  B17_9: 'B17_9_BienDoiDacDiemKhac',
+  B17_10: 'B17_10_Tu2NhipGiamKeoDai',
+  B17_no_stim: 'B17_11_KhongTangSauKichThich',
+  B18a: 'B18a_DDNTToiThieuKeoDai',
+  B18b: 'B18b_ChuyenNTTBTsangNhanh',
+  B18: 'B18_DacDiemNguyCoCao',
+  B19: 'B19_DacDiemBaoVe',
+  B20_to_hop: 'B20_ToHopNguyCoCaoBaoVe',
+  HIGH_RISK: 'B18_HIGH_RISK',
+  PROTECTIVE: 'B19_PROTECTIVE',
+  ghi_chu_ctg: 'B21_GhiChuDocCTG',
+
+  C1_so: 'C1a_SoLanMangThaiTruoc',
+  C1: 'C1_NhomSoLanMangThai',
+  con_so_con_ra: 'C1b_PhanLoaiConSoConRa',
+  C2: 'C2_TienSuMoLayThai',
+  C3_benh_nen: 'C3_BenhLyNenTruocMangThai',
+  C3_chitiet: 'C3a_ChiTietBenhLyNen',
+
+  D1: 'D1_CanNangLucVaoSinh',
+  D1_tang_can: 'D1a_MucTangCanThaiKy',
+  D2_tuan: 'D2a_TuoiThaiTuan',
+  D2_ngay: 'D2b_TuoiThaiNgay',
+  D2_text: 'D2_TuoiThaiChuoi',
+  D3: 'D3_NhomTuoiThai',
+  D4: 'D4_NgoiThai',
+  D5: 'D5_TienSanGiat',
+  D5_tha_tk: 'D5a_TangHuyetApThaiKy',
+  D6: 'D6_DaiThaoDuongThaiKy',
+  D10_gbs: 'D10_XetNghiemGBS',
+  D7: 'D7_ThaiGioiHanTangTruong',
+  D8_afi: 'D8a_ChiSoOiAFI',
+  D8: 'D8_PhanNhomNuocOi',
+  D12_doppler: 'D12_BatThuongDoppler',
+  D13_sa_khac: 'D13_BatThuongSieuAmKhac',
+  D9: 'D9_DayRonQuanCo',
+  D9_chitiet: 'D9a_BatThuongDayRonKhac',
+
+  E1: 'E1_PhuongPhapKPCD',
+  E1_co_kpcd: 'E1a_CoKhoiPhatChuyenDa',
+  E1_khac: 'E1b_GhiRoKPCDKhac',
+  E2: 'E2_TangCoOxytocin',
+  E3: 'E3_GiamDauNgoaiMangCung',
+  E8_gd_cd: 'E8_GiaiDoanChuyenDa',
+  E4: 'E4_TinhTrangOiLucCTG',
+  E4_gio_vo_oi: 'E4a_ThoiGianVoOiDenSinh',
+  E5: 'E5_NuocOiLanPhanSu',
+  E6_nhietdo: 'E6a_NhietDoMe',
+  E6: 'E6_MeSot',
+  E7: 'E7_NhiemTrungOi',
+
+  F1: 'F1_CoHoiSucTrongTuCung',
+  F2: 'F2_ThayDoiTuTheMe',
+  F3: 'F3_ThoOxy',
+  F4: 'F4_GiamNgungOxytocin',
+  F5: 'F5_TruyenDich',
+  F6: 'F6_XuTriTutHuyetApMe',
+  F7: 'F7_TruyenOi',
+  F8: 'F8_SuDungTerbutaline',
+  F8_khac: 'F8a_BienPhapHoiSucKhac',
+  F9: 'F9_DienTienCTGSauXuTri',
+  F9_chitiet: 'F9a_ChiTietDienTienCTG',
+  F10_tg_ctg: 'F10a_GioBatDauCTGII',
+  G0_tg_sinh: 'F10b_GioSinh',
+  F10_phut: 'F10_ThoiGianCTGIIDenSinh',
+  F11_nhom_30p: 'F11_NhomThoiGian30Phut',
+  F12_nhom_60p: 'F12_NhomThoiGian60Phut',
+
+  G1: 'G1_PhuongThucSinh',
+  G1_chung: 'G1a_SinhNgaAmDaoVsMLT',
+  G2: 'G2_LyDoSinhHoTro',
+  G3: 'G3_LyDoMoLayThai',
+  G13_gioi_tinh: 'G13_GioiTinhSoSinh',
+  G4: 'G4_CanNangSoSinh',
+  G5: 'G5_NhomCanNangSoSinh',
+  G5_phuluc: 'G5a_NhomCanNangPhuLuc',
+  G6: 'G6_ApgarPhut1',
+  G7: 'G7_ApgarPhut1Duoi7',
+  G8: 'G8_ApgarPhut5',
+  G9: 'G9_ApgarPhut5Duoi7',
+  G10: 'G10_CoHoiSucSoSinh',
+  G11: 'G11_BienPhapHoiSucCaoNhat',
+  G12: 'G12_TinhTrangTreSauSinh',
+  G14_bc_ss: 'G14_BienChungSoSinhKhac',
+
+  found_via_paper: 'QA_PhatHienQuaHSGiay',
+  ctg_verified: 'QA_DaDuyetCTG',
+  qa_10pct: 'QA_KiemTraCheo10Pct',
+  final_locked: 'QA_DaKhoaChot',
+  screen_status: 'QA_TrangThaiSangLoc',
+  screen_reason: 'QA_LyDoLoaiSTROBE',
+  screen_note: 'QA_GhiChuSangLoc',
+  doc_ctg_group: 'QA_BSGhiNhanNhomCTG',
+  has_risk: 'QA_CoYeuToNguyCo',
+  risk_detail: 'QA_ChiTietYeuToNguyCo',
+  trang_thai_nhap: 'QA_TrangThaiNhapLieu',
+  last_edited_by: 'SYS_NguoiSuaCuoi',
+  editing_by: 'SYS_DangMoSuaBoi',
+  editing_at: 'SYS_ThoiDiemMoSua',
+  link_anh_drive: 'SYS_LinkAnhCTGDrive',
+  cap_nhat_luc: 'SYS_CapNhatLuc'
+};
+
+const REVERSE_SPSS_COL_MAP = Object.fromEntries(
+  Object.entries(SPSS_COL_MAP).map(([k, v]) => [v, k])
+);
+
+function mapObjectKeysToSpss(obj) {
+  const out = {};
+  Object.keys(obj || {}).forEach(k => {
+    out[SPSS_COL_MAP[k] || k] = obj[k];
+  });
+  return out;
+}
+
+function mapObjectKeysFromSpss(obj) {
+  const out = { ...(obj || {}) };
+  Object.keys(obj || {}).forEach(k => {
+    const internalKey = REVERSE_SPSS_COL_MAP[k];
+    if (internalKey && (out[internalKey] === undefined || out[internalKey] === '')) {
+      out[internalKey] = obj[k];
+    }
+  });
+  return out;
+}
+
 function buildCloudFlatRow(rec) {
   const d = deriveAll(rec.data);
   const comp = evaluateCompleteness(rec);
-  return {
+  const rawRow = {
     uid: rec.uid,
     screen_status: rec.screen_status || 'approved',
     screen_reason: rec.screen_reason || '',
@@ -2252,12 +2646,14 @@ function buildCloudFlatRow(rec) {
     link_anh_drive: rec.imgDriveUrl || '',
     cap_nhat_luc: new Date().toLocaleString('vi-VN')
   };
+  return mapObjectKeysToSpss(rawRow);
 }
 
 async function applyCloudRowsToLocal(cloudRows) {
   if (!Array.isArray(cloudRows)) return 0;
   let cnt = 0;
-  for (const crow of cloudRows) {
+  for (const rawCrow of cloudRows) {
+    const crow = mapObjectKeysFromSpss(rawCrow);
     const hsba = String(crow.ma_hsba || '').trim();
     const uid = String(crow.uid || '').trim();
     let idx = records.findIndex(r => (uid && r.uid === uid) || (hsba && (r.data.ma_hsba || '').trim().toLowerCase() === hsba.toLowerCase()));
@@ -2470,7 +2866,7 @@ function handleExcelScreenFile(event) {
         const c0 = String(r[0] ?? '').trim();
         const c1 = String(r[1] ?? '').trim();
         const c2 = String(r[2] ?? '').trim();
-        if (!c0 || /mã.*hsba|mã.*bệnh.*án|stt/i.test(c0)) continue;
+        if (!c0 || /mã.*hsba|mã.*bệnh.*án|id_mahsba|ma_hsba|stt/i.test(c0)) continue;
         lines.push([c0, c1, c2].filter(Boolean).join('\t'));
       }
       document.getElementById('bulkTextarea').value = lines.join('\n');
@@ -4111,7 +4507,7 @@ function runBiNumeric() {
 }
 
 // ================= 12. XUẤT EXCEL 5 SHEET (CÓ CODE_SPSS_SYNTAX) & CSV =================
-const EXPORT_COLS = [
+const EXPORT_LEGACY_COLS = [
   'ma_nc','ma_hsba','ho_ten','found_via_paper','ctg_verified','qa_10pct','final_locked','nam_sinh','ngay_nhap_vien','ngay_gio_ctg','ngay_thu_thap','nguoi_nhap',
   'A1','A2','dia_chi','A3','khu_vuc_song','A4','A5','A6','A7','A8',
   'B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','B13','B14','B15a','B15b','B15c','B15_tb','B16','B15_lien_quan',
@@ -4123,70 +4519,137 @@ const EXPORT_COLS = [
   'G1','G1_chung','G2','G3','G13_gioi_tinh','G4','G5','G5_phuluc','G6','G7','G8','G9','G10','G11','G12','G14_bc_ss'
 ];
 
+const EXPORT_COLS = EXPORT_LEGACY_COLS.map(c => SPSS_COL_MAP[c] || c);
+
 const SPSS_VALUE_LABELS = {
-  A2: { 0: '< 20 tuổi', 1: '20–34 tuổi', 2: '>= 35 tuổi' },
-  A3: { 0: 'Thành thị (Phường/Quận)', 1: 'Nông thôn (Xã/Huyện)' },
-  khu_vuc_song: { 0: 'Nông thôn', 1: 'Thành thị' },
-  A4: { 0: 'Nội trợ', 1: 'Công chức/Viên chức', 2: 'Buôn bán/Lao động chân tay' },
-  A8: { 0: 'Nhẹ cân (<18.5)', 1: 'Bình thường (18.5-22.9)', 2: 'Thừa cân (23-24.9)', 3: 'Béo phì (>=25)' },
-  B2: { 0: 'Chậm (<110)', 1: 'Bình thường (110-160)', 2: 'Nhanh (>160)' },
-  B3: { 0: 'Mất (nhịp phẳng)', 1: 'Giảm / Tối thiểu (<=5)', 2: 'Bình thường / Trung bình (6-25)', 3: 'Tăng (>25)' },
-  B4: { 0: 'Không', 1: 'Có' }, B5: { 0: 'Không', 1: 'Có' }, B6: { 0: 'Không', 1: 'Có' }, B7: { 0: 'Không', 1: 'Có' },
-  B8: { 0: 'Không', 1: 'Có' }, B9: { 0: 'Không', 1: 'Có' }, B10: { 0: 'Không', 1: 'Có' }, B11: { 0: 'Không', 1: 'Có' },
-  B12: { 0: 'Không', 1: 'Có' }, B13: { 0: 'Không', 1: 'Có' }, B16: { 0: 'Không', 1: 'Có' },
-  B18: { 0: 'Không nguy cơ cao', 1: 'Có đặc điểm nguy cơ cao' },
-  B19: { 0: 'Không có đặc điểm bảo vệ', 1: 'Có đặc điểm bảo vệ' },
-  B20_to_hop: { 0: 'Không có cả hai', 1: 'Chỉ có bảo vệ', 2: 'Chỉ có nguy cơ cao', 3: 'Đồng thời cả hai' },
-  C1: { 0: '0 lần (Con so)', 1: '1 lần', 2: '>= 2 lần' },
-  con_so_con_ra: { 0: 'Con so', 1: 'Con rạ' },
-  C2: { 0: '0 lần', 1: '1 lần', 2: '>= 2 lần' },
-  D3: { 0: '37-38w6d', 1: '39-40w6d', 2: '41-41w6d' },
-  D4: { 0: 'Ngôi đầu', 1: 'Ngôi mông', 2: 'Ngôi khác/Hỗn hợp' },
-  D5: { 0: 'Không', 1: 'Có' }, D6: { 0: 'Không', 1: 'Có' }, D7: { 0: 'Không', 1: 'Có' },
-  D8: { 0: 'Thiểu ối (AFI <5cm)', 1: 'Bình thường (5-25cm)', 2: 'Đa ối (>25cm)' },
-  D9: { 0: 'Không', 1: '1 vòng', 2: '>= 2 vòng' },
-  E1: { 0: 'Chuyển dạ tự nhiên', 1: 'Lóc ối/Vê núm vú', 2: 'Foley', 3: 'Prostaglandin E2', 4: 'Oxytocin', 5: 'Khác' },
-  E1_co_kpcd: { 0: 'Chuyển dạ tự nhiên', 1: 'Có KPCD' },
-  E2: { 0: 'Không', 1: 'Có' }, E3: { 0: 'Không', 1: 'Có' },
-  E4: { 0: 'Ối còn', 1: 'Ối vỡ tự nhiên', 2: 'Bấm ối' },
-  E5: { 0: 'Trong / Không lẫn phân su', 1: 'Có lẫn phân su / ối xanh', 9: 'Chưa đánh giá được (ối còn)' },
-  E6: { 0: 'Không sốt (<38.0)', 1: 'Có sốt (>=38.0)' },
-  E7: { 0: 'Không', 1: 'Nghi ngờ', 2: 'Chẩn đoán xác định' },
-  F1: { 0: 'Không', 1: 'Có' }, F2: { 0: 'Không', 1: 'Có' }, F3: { 0: 'Không', 1: 'Có' },
-  F4: { 0: 'Không', 1: 'Có', 9: 'Không áp dụng' },
-  F5: { 0: 'Không', 1: 'Có' }, F6: { 0: 'Không', 1: 'Có' }, F7: { 0: 'Không', 1: 'Có' }, F8: { 0: 'Không', 1: 'Có' },
-  F9: { 0: 'Trở về nhóm I', 1: 'Vẫn nhóm II / Tái diễn nhóm II', 2: 'Diễn tiến nhóm III', 9: 'Không đủ dữ liệu' },
-  F11_nhom_30p: { 0: '<= 30 phút', 1: '31-60 phút', 2: '61-90 phút', 3: '91-120 phút', 4: '> 120 phút' },
-  F12_nhom_60p: { 0: '<= 60 phút', 1: '> 60 phút' },
-  G1: { 0: 'Sinh thường', 1: 'Sinh hỗ trợ (giác hút/forceps)', 2: 'Mổ lấy thai' },
-  G1_chung: { 0: 'Sinh ngả âm đạo', 1: 'Mổ lấy thai' },
-  G5: { 0: '< 2500g', 1: '2500 - <3500g', 2: '>= 3500g' },
-  G7: { 0: 'Không (>=7)', 1: 'Có (<7)' }, G9: { 0: 'Không (>=7)', 1: 'Có (<7)' }, G10: { 0: 'Không', 1: 'Có' },
-  G11: { 0: 'Chăm sóc thường quy', 1: 'Hỗ trợ oxy', 2: 'Thở CPAP', 3: 'Thông khí áp lực dương qua mặt nạ', 4: 'Đặt nội khí quản / Thở máy', 5: 'Ép tim / dùng thuốc' },
-  G12: { 0: 'Trẻ ổn định / Da kề da mẹ', 1: 'Chuyển khoa sơ sinh / Nhập NICU' }
+  A2_NhomTuoiMe: { 0: '< 20 tuổi', 1: '20–34 tuổi', 2: '>= 35 tuổi' },
+  A3_PhanNhomDiaChi: { 0: 'Thành thị (Phường/Quận)', 1: 'Nông thôn (Xã/Huyện)' },
+  A3b_KhuVucSong: { 0: 'Nông thôn', 1: 'Thành thị' },
+  A4_NgheNghiep: { 0: 'Nội trợ', 1: 'Công chức/Viên chức', 2: 'Buôn bán/Lao động chân tay' },
+  A8_NhomBMITruocMangThai: { 0: 'Nhẹ cân (<18.5)', 1: 'Bình thường (18.5-22.9)', 2: 'Thừa cân (23-24.9)', 3: 'Béo phì (>=25)' },
+  B2_NhomNhipTimThaiCoBan: { 0: 'Chậm (<110)', 1: 'Bình thường (110-160)', 2: 'Nhanh (>160)' },
+  B3_DaoDongNoiTai: { 0: 'Mất (nhịp phẳng)', 1: 'Giảm / Tối thiểu (<=5)', 2: 'Bình thường / Trung bình (6-25)', 3: 'Tăng (>25)' },
+  B4_NhipTang: { 0: 'Không', 1: 'Có' },
+  B5_NhipGiamSom: { 0: 'Không', 1: 'Có' },
+  B6_NhipGiamMuon: { 0: 'Không', 1: 'Có' },
+  B7_NhipGiamMuonLapLai: { 0: 'Không', 1: 'Có' },
+  B8_NhipGiamBienDoi: { 0: 'Không', 1: 'Có' },
+  B9_NhipGiamBienDoiLapLai: { 0: 'Không', 1: 'Có' },
+  B10_GiamBienDoiPhucHoiCham: { 0: 'Không', 1: 'Có' },
+  B11_GiamBienDoiOvershoot: { 0: 'Không', 1: 'Có' },
+  B12_GiamBienDoiCoVai: { 0: 'Không', 1: 'Có' },
+  B13_CoNhipGiamKeoDai: { 0: 'Không', 1: 'Có' },
+  B16_Tachysystole: { 0: 'Không', 1: 'Có' },
+  B18_DacDiemNguyCoCao: { 0: 'Không nguy cơ cao', 1: 'Có đặc điểm nguy cơ cao' },
+  B19_DacDiemBaoVe: { 0: 'Không có đặc điểm bảo vệ', 1: 'Có đặc điểm bảo vệ' },
+  B20_ToHopNguyCoCaoBaoVe: { 0: 'Không có cả hai', 1: 'Chỉ có bảo vệ', 2: 'Chỉ có nguy cơ cao', 3: 'Đồng thời cả hai' },
+  C1_NhomSoLanMangThai: { 0: '0 lần (Con so)', 1: '1 lần', 2: '>= 2 lần' },
+  C1b_PhanLoaiConSoConRa: { 0: 'Con so', 1: 'Con rạ' },
+  C2_TienSuMoLayThai: { 0: '0 lần', 1: '1 lần', 2: '>= 2 lần' },
+  D3_NhomTuoiThai: { 0: '37-38w6d', 1: '39-40w6d', 2: '41-41w6d' },
+  D4_NgoiThai: { 0: 'Ngôi đầu', 1: 'Ngôi mông', 2: 'Ngôi khác/Hỗn hợp' },
+  D5_TienSanGiat: { 0: 'Không', 1: 'Có' },
+  D6_DaiThaoDuongThaiKy: { 0: 'Không', 1: 'Có' },
+  D7_ThaiGioiHanTangTruong: { 0: 'Không', 1: 'Có' },
+  D8_PhanNhomNuocOi: { 0: 'Thiểu ối (AFI <5cm)', 1: 'Bình thường (5-25cm)', 2: 'Đa ối (>25cm)' },
+  D9_DayRonQuanCo: { 0: 'Không', 1: '1 vòng', 2: '>= 2 vòng' },
+  E1_PhuongPhapKPCD: { 0: 'Chuyển dạ tự nhiên', 1: 'Lóc ối/Vê núm vú', 2: 'Foley', 3: 'Prostaglandin E2', 4: 'Oxytocin', 5: 'Khác' },
+  E1a_CoKhoiPhatChuyenDa: { 0: 'Chuyển dạ tự nhiên', 1: 'Có KPCD' },
+  E2_TangCoOxytocin: { 0: 'Không', 1: 'Có' },
+  E3_GiamDauNgoaiMangCung: { 0: 'Không', 1: 'Có' },
+  E4_TinhTrangOiLucCTG: { 0: 'Ối còn', 1: 'Ối vỡ tự nhiên', 2: 'Bấm ối' },
+  E5_NuocOiLanPhanSu: { 0: 'Trong / Không lẫn phân su', 1: 'Có lẫn phân su / ối xanh', 9: 'Chưa đánh giá được (ối còn)' },
+  E6_MeSot: { 0: 'Không sốt (<38.0)', 1: 'Có sốt (>=38.0)' },
+  E7_NhiemTrungOi: { 0: 'Không', 1: 'Nghi ngờ', 2: 'Chẩn đoán xác định' },
+  F1_CoHoiSucTrongTuCung: { 0: 'Không', 1: 'Có' },
+  F2_ThayDoiTuTheMe: { 0: 'Không', 1: 'Có' },
+  F3_ThoOxy: { 0: 'Không', 1: 'Có' },
+  F4_GiamNgungOxytocin: { 0: 'Không', 1: 'Có', 9: 'Không áp dụng' },
+  F5_TruyenDich: { 0: 'Không', 1: 'Có' },
+  F6_XuTriTutHuyetApMe: { 0: 'Không', 1: 'Có' },
+  F7_TruyenOi: { 0: 'Không', 1: 'Có' },
+  F8_SuDungTerbutaline: { 0: 'Không', 1: 'Có' },
+  F9_DienTienCTGSauXuTri: { 0: 'Trở về nhóm I', 1: 'Vẫn nhóm II / Tái diễn nhóm II', 2: 'Diễn tiến nhóm III', 9: 'Không đủ dữ liệu' },
+  F11_NhomThoiGian30Phut: { 0: '<= 30 phút', 1: '31-60 phút', 2: '61-90 phút', 3: '91-120 phút', 4: '> 120 phút' },
+  F12_NhomThoiGian60Phut: { 0: '<= 60 phút', 1: '> 60 phút' },
+  G1_PhuongThucSinh: { 0: 'Sinh thường', 1: 'Sinh hỗ trợ (giác hút/forceps)', 2: 'Mổ lấy thai' },
+  G1a_SinhNgaAmDaoVsMLT: { 0: 'Sinh ngả âm đạo', 1: 'Mổ lấy thai' },
+  G5_NhomCanNangSoSinh: { 0: '< 2500g', 1: '2500 - <3500g', 2: '>= 3500g' },
+  G7_ApgarPhut1Duoi7: { 0: 'Không (>=7)', 1: 'Có (<7)' },
+  G9_ApgarPhut5Duoi7: { 0: 'Không (>=7)', 1: 'Có (<7)' },
+  G10_CoHoiSucSoSinh: { 0: 'Không', 1: 'Có' },
+  G11_BienPhapHoiSucCaoNhat: { 0: 'Chăm sóc thường quy', 1: 'Hỗ trợ oxy', 2: 'Thở CPAP', 3: 'Thông khí áp lực dương qua mặt nạ', 4: 'Đặt nội khí quản / Thở máy', 5: 'Ép tim / dùng thuốc' },
+  G12_TinhTrangTreSauSinh: { 0: 'Trẻ ổn định / Da kề da mẹ', 1: 'Chuyển khoa sơ sinh / Nhập NICU' }
 };
 
 function generateSpssSyntaxLines() {
   const lines = [
-    ['* ĐOẠN MÃ SPSS SYNTAX TỰ ĐỘNG — CHỈ CẦN COPY TOÀN BỘ CỘT NÀY DÁN VÀO CỬA SỔ SYNTAX CỦA SPSS VÀ BẤM RUN (Ctrl+R) *'],
+    ['* ĐOẠN MÃ SPSS SYNTAX CHUẨN BIẾN MỚI — CHỈ CẦN COPY TOÀN BỘ CỘT NÀY DÁN VÀO CỬA SỔ SYNTAX CỦA SPSS VÀ BẤM RUN (Ctrl+R) *'],
     ['VARIABLE LABELS'],
-    [`  A1 'Tuổi mẹ (năm)'`], [`  A2 'Nhóm tuổi mẹ'`], [`  A3 'Phân nhóm địa chỉ'`], [`  A4 'Nghề nghiệp'`],
-    [`  A5 'Cân nặng trước mang thai (kg)'`], [`  A6 'Chiều cao (cm)'`], [`  A7 'BMI trước mang thai (kg/m2)'`], [`  A8 'Nhóm BMI trước mang thai'`],
-    [`  B1 'Nhịp tim thai cơ bản (nhịp/phút)'`], [`  B2 'Nhóm nhịp tim thai cơ bản'`], [`  B3 'Dao động nội tại (DĐNT)'`], [`  B4 'Nhịp tăng'`],
-    [`  B5 'Nhịp giảm sớm'`], [`  B6 'Nhịp giảm muộn'`], [`  B7 'Nhịp giảm muộn lặp lại'`], [`  B8 'Nhịp giảm biến đổi'`],
-    [`  B9 'Nhịp giảm biến đổi lặp lại'`], [`  B13 'Có nhịp giảm kéo dài'`], [`  B14 'Số lần nhịp giảm kéo dài'`],
-    [`  B15_tb 'Trung bình cơn co tử cung / 10 phút'`], [`  B16 'Tachysystole (>5 cơn/10p)'`],
-    [`  B18 'Đặc điểm nguy cơ cao (ACOG 2025)'`], [`  B19 'Đặc điểm bảo vệ (ACOG 2025)'`], [`  B20_to_hop 'Tổ hợp đặc điểm nguy cơ cao và bảo vệ'`],
-    [`  C1 'Nhóm số lần mang thai trước đây'`], [`  C2 'Tiền sử mổ lấy thai'`],
-    [`  D1 'Cân nặng lúc vào sinh (kg)'`], [`  D3 'Nhóm tuổi thai'`], [`  D4 'Ngôi thai'`], [`  D5 'Tiền sản giật'`],
-    [`  D6 'Đái tháo đường thai kỳ'`], [`  D7 'Thai giới hạn tăng trưởng (FGR)'`], [`  D8 'Phân nhóm lượng nước ối'`], [`  D9 'Dây rốn quấn cổ'`],
-    [`  E1 'Phương pháp khởi phát chuyển dạ'`], [`  E2 'Tăng co oxytocin trước CTG II'`], [`  E3 'Giảm đau ngoài màng cứng'`],
-    [`  E4 'Tình trạng ối lúc CTG'`], [`  E5 'Nước ối lẫn phân su'`], [`  E6 'Mẹ sốt (>=38 độ C)'`], [`  E7 'Nhiễm trùng ối'`],
-    [`  F1 'Có hồi sức trong tử cung'`], [`  F9 'Diễn tiến CTG sau xử trí'`], [`  F10_phut 'Thời gian từ CTG nhóm II đến sinh (phút)'`],
-    [`  F11_nhom_30p 'Phân nhóm thời gian 30 phút'`], [`  F12_nhom_60p 'Phân nhóm thời gian 60 phút'`],
-    [`  G1 'Phương thức sinh'`], [`  G4 'Cân nặng sơ sinh (gram)'`], [`  G5 'Nhóm cân nặng sơ sinh'`],
-    [`  G6 'Apgar phút 1'`], [`  G7 'Apgar phút 1 < 7'`], [`  G8 'Apgar phút 5'`], [`  G9 'Apgar phút 5 < 7'`],
-    [`  G10 'Có hồi sức sơ sinh'`], [`  G11 'Biện pháp hồi sức sơ sinh cao nhất'`], [`  G12 'Tình trạng trẻ sau sinh (NICU)'.`],
+    [`  ID_MaNghienCuu 'Mã nghiên cứu'`],
+    [`  ID_MaHSBA 'Mã bệnh án / HSBA'`],
+    [`  ID_HoTenSanPhu 'Họ tên sản phụ'`],
+    [`  A1_TuoiMe 'Tuổi mẹ (năm)'`],
+    [`  A2_NhomTuoiMe 'Nhóm tuổi mẹ'`],
+    [`  A3a_DiaChiNguyenVan 'Địa chỉ nguyên văn'`],
+    [`  A3_PhanNhomDiaChi 'Phân nhóm địa chỉ'`],
+    [`  A3b_KhuVucSong 'Khu vực sống'`],
+    [`  A4_NgheNghiep 'Nghề nghiệp'`],
+    [`  A5_CanNangTruocMangThai 'Cân nặng trước mang thai (kg)'`],
+    [`  A6_ChieuCao 'Chiều cao (cm)'`],
+    [`  A7_BMITruocMangThai 'BMI trước mang thai (kg/m2)'`],
+    [`  A8_NhomBMITruocMangThai 'Nhóm BMI trước mang thai'`],
+    [`  B1_NhipTimThaiCoBan 'Nhịp tim thai cơ bản (nhịp/phút)'`],
+    [`  B2_NhomNhipTimThaiCoBan 'Nhóm nhịp tim thai cơ bản'`],
+    [`  B3_DaoDongNoiTai 'Dao động nội tại (DĐNT)'`],
+    [`  B4_NhipTang 'Nhịp tăng'`],
+    [`  B5_NhipGiamSom 'Nhịp giảm sớm'`],
+    [`  B6_NhipGiamMuon 'Nhịp giảm muộn'`],
+    [`  B7_NhipGiamMuonLapLai 'Nhịp giảm muộn lặp lại'`],
+    [`  B8_NhipGiamBienDoi 'Nhịp giảm biến đổi'`],
+    [`  B9_NhipGiamBienDoiLapLai 'Nhịp giảm biến đổi lặp lại'`],
+    [`  B13_CoNhipGiamKeoDai 'Có nhịp giảm kéo dài'`],
+    [`  B14_SoLanNhipGiamKeoDai 'Số lần nhịp giảm kéo dài'`],
+    [`  B15_TrungBinhConCo10Phut 'Trung bình cơn co tử cung / 10 phút'`],
+    [`  B16_Tachysystole 'Tachysystole (>5 cơn/10p)'`],
+    [`  B18_DacDiemNguyCoCao 'Đặc điểm nguy cơ cao (ACOG 2025)'`],
+    [`  B19_DacDiemBaoVe 'Đặc điểm bảo vệ (ACOG 2025)'`],
+    [`  B20_ToHopNguyCoCaoBaoVe 'Tổ hợp đặc điểm nguy cơ cao và bảo vệ'`],
+    [`  C1_NhomSoLanMangThai 'Nhóm số lần mang thai trước đây'`],
+    [`  C1b_PhanLoaiConSoConRa 'Phân loại Con so / Con rạ'`],
+    [`  C2_TienSuMoLayThai 'Tiền sử mổ lấy thai'`],
+    [`  D1_CanNangLucVaoSinh 'Cân nặng lúc vào sinh (kg)'`],
+    [`  D3_NhomTuoiThai 'Nhóm tuổi thai'`],
+    [`  D4_NgoiThai 'Ngôi thai'`],
+    [`  D5_TienSanGiat 'Tiền sản giật'`],
+    [`  D6_DaiThaoDuongThaiKy 'Đái tháo đường thai kỳ'`],
+    [`  D7_ThaiGioiHanTangTruong 'Thai giới hạn tăng trưởng (FGR)'`],
+    [`  D8_PhanNhomNuocOi 'Phân nhóm lượng nước ối'`],
+    [`  D9_DayRonQuanCo 'Dây rốn quấn cổ'`],
+    [`  E1_PhuongPhapKPCD 'Phương pháp khởi phát chuyển dạ'`],
+    [`  E1a_CoKhoiPhatChuyenDa 'Có khởi phát chuyển dạ'`],
+    [`  E2_TangCoOxytocin 'Tăng co oxytocin trước CTG II'`],
+    [`  E3_GiamDauNgoaiMangCung 'Giảm đau ngoài màng cứng'`],
+    [`  E4_TinhTrangOiLucCTG 'Tình trạng ối lúc CTG'`],
+    [`  E5_NuocOiLanPhanSu 'Nước ối lẫn phân su'`],
+    [`  E6_MeSot 'Mẹ sốt (>=38 độ C)'`],
+    [`  E7_NhiemTrungOi 'Nhiễm trùng ối'`],
+    [`  F1_CoHoiSucTrongTuCung 'Có hồi sức trong tử cung'`],
+    [`  F9_DienTienCTGSauXuTri 'Diễn tiến CTG sau xử trí'`],
+    [`  F10_ThoiGianCTGIIDenSinh 'Thời gian từ CTG nhóm II đến sinh (phút)'`],
+    [`  F11_NhomThoiGian30Phut 'Phân nhóm thời gian 30 phút'`],
+    [`  F12_NhomThoiGian60Phut 'Phân nhóm thời gian 60 phút'`],
+    [`  G1_PhuongThucSinh 'Phương thức sinh'`],
+    [`  G1a_SinhNgaAmDaoVsMLT 'Sinh ngả âm đạo vs Mổ lấy thai'`],
+    [`  G4_CanNangSoSinh 'Cân nặng sơ sinh (gram)'`],
+    [`  G5_NhomCanNangSoSinh 'Nhóm cân nặng sơ sinh'`],
+    [`  G6_ApgarPhut1 'Apgar phút 1'`],
+    [`  G7_ApgarPhut1Duoi7 'Apgar phút 1 < 7'`],
+    [`  G8_ApgarPhut5 'Apgar phút 5'`],
+    [`  G9_ApgarPhut5Duoi7 'Apgar phút 5 < 7'`],
+    [`  G10_CoHoiSucSoSinh 'Có hồi sức sơ sinh'`],
+    [`  G11_BienPhapHoiSucCaoNhat 'Biện pháp hồi sức sơ sinh cao nhất'`],
+    [`  G12_TinhTrangTreSauSinh 'Tình trạng trẻ sau sinh (NICU)'.`],
     [''],
     ['VALUE LABELS']
   ];
@@ -4200,49 +4663,55 @@ function generateSpssSyntaxLines() {
   return lines;
 }
 
+function buildExportSpssRow(rec) {
+  const d = deriveAll(rec.data);
+  const merged = {
+    ...rec.data,
+    ...d,
+    found_via_paper: rec.found_via_paper ? 1 : 0,
+    ctg_verified: rec.ctg_verified ? 1 : 0,
+    qa_10pct: rec.qa_10pct ? 1 : 0,
+    final_locked: rec.final_locked ? 1 : 0
+  };
+  const obj = {};
+  EXPORT_LEGACY_COLS.forEach((legacyKey, idx) => {
+    const spssKey = EXPORT_COLS[idx];
+    const val = merged[legacyKey];
+    obj[spssKey] = (val === null || val === undefined) ? '' : val;
+  });
+  return obj;
+}
+
 function exportFullExcel() {
   if (typeof XLSX === 'undefined') { exportSPSS_CSV(); return; }
   const approved = records.filter(r => r.screen_status === 'approved');
   if (!approved.length) { alert('Chưa có hồ sơ đã duyệt nào để xuất.'); return; }
 
-  const dataRows = approved.map(rec => {
-    const d = deriveAll(rec.data);
-    const merged = {
-      ...rec.data,
-      ...d,
-      found_via_paper: rec.found_via_paper ? 1 : 0,
-      ctg_verified: rec.ctg_verified ? 1 : 0,
-      qa_10pct: rec.qa_10pct ? 1 : 0,
-      final_locked: rec.final_locked ? 1 : 0
-    };
-    const obj = {};
-    EXPORT_COLS.forEach(c => { obj[c] = (merged[c] === null || merged[c] === undefined) ? '' : merged[c]; });
-    return obj;
-  });
+  const dataRows = approved.map(buildExportSpssRow);
 
-  const codeBook = [['Mã biến', 'Tên biến & Ý nghĩa lâm sàng', 'Quy ước mã hóa số (SPSS)']];
+  const codeBook = [['Tên biến chuẩn SPSS', 'Mã biến cũ', 'Tên biến & Ý nghĩa lâm sàng', 'Quy ước mã hóa số (SPSS)']];
   SECTIONS.forEach(sec => {
     SCHEMA[sec].forEach(f => {
       const codeStr = f.opts ? f.opts.map(o => `${o[0]} = ${o[1].replace(/^\d+\s*-\s*/, '')}`).join(' | ') : (f.type === 'number' ? 'Giá trị số thực (ô trống = Missing)' : 'Chuỗi ký tự / Ngày giờ');
-      codeBook.push([f.id, f.label.replace('*', ''), codeStr]);
+      codeBook.push([SPSS_COL_MAP[f.id] || f.id, f.id, f.label.replace('*', ''), codeStr]);
     });
     (DERIVED_DEFS[sec] || []).forEach(df => {
       const codeStr = df.opts ? df.opts.map(o => `${o[0]} = ${o[1]}`).join(' | ') : 'Biến dẫn xuất tự động';
-      codeBook.push([df.id, df.label, codeStr]);
+      codeBook.push([SPSS_COL_MAP[df.id] || df.id, df.id, df.label, codeStr]);
     });
   });
 
   const screenRows = records.map(r => ({
-    ma_hsba: r.data.ma_hsba || '',
-    ho_ten: r.data.ho_ten || '',
-    bs_ghi_ctg_hsba: r.doc_ctg_group || '',
-    co_yeu_to_nguy_co: r.has_risk ? 1 : 0,
-    chi_tiet_nguy_co: r.risk_detail || '',
-    ket_qua_sang_loc: r.screen_status,
-    phat_hien_qua_hs_giay: r.found_via_paper ? 1 : 0,
-    ma_nc: r.data.ma_nc || '',
-    ly_do_loai_strobe: r.screen_reason || '',
-    ghi_chu: r.screen_note || ''
+    ID_MaHSBA: r.data.ma_hsba || '',
+    ID_HoTenSanPhu: r.data.ho_ten || '',
+    QA_BSGhiNhanNhomCTG: r.doc_ctg_group || '',
+    QA_CoYeuToNguyCo: r.has_risk ? 1 : 0,
+    QA_ChiTietYeuToNguyCo: r.risk_detail || '',
+    QA_TrangThaiSangLoc: r.screen_status,
+    QA_PhatHienQuaHSGiay: r.found_via_paper ? 1 : 0,
+    ID_MaNghienCuu: r.data.ma_nc || '',
+    QA_LyDoLoaiSTROBE: r.screen_reason || '',
+    QA_GhiChuSangLoc: r.screen_note || ''
   }));
 
   const excluded = records.filter(r => r.screen_status === 'excluded');
@@ -4264,8 +4733,8 @@ function exportFullExcel() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(generateSpssSyntaxLines()), 'Code_SPSS_Syntax');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(strobeRows), 'LuuDo_STROBE');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(screenRows), 'NhatKy_SangLoc_HSGiay');
-  XLSX.writeFile(wb, `TRANG_DOAN_KLTN_CTG_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  showToast('📗 Đã xuất file Excel 5 sheet (kèm Code_SPSS_Syntax & Lưu đồ STROBE)!');
+  XLSX.writeFile(wb, `TRANG_DOAN_KLTN_CTG_SPSS_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  showToast('📗 Đã xuất file Excel 5 sheet chuẩn tên biến SPSS!');
 }
 
 function exportSPSS_CSV() {
@@ -4273,16 +4742,17 @@ function exportSPSS_CSV() {
   if (!approved.length) { alert('Chưa có hồ sơ đã duyệt nào để xuất.'); return; }
   const rows = [EXPORT_COLS.join(',')];
   approved.forEach(rec => {
-    const d = deriveAll(rec.data);
-    const merged = { ...rec.data, ...d, found_via_paper: rec.found_via_paper ? 1 : 0, ctg_verified: rec.ctg_verified ? 1 : 0, qa_10pct: rec.qa_10pct ? 1 : 0 };
+    const obj = buildExportSpssRow(rec);
     rows.push(EXPORT_COLS.map(c => {
-      const v = merged[c];
+      const v = obj[c];
       if (v === null || v === undefined || v === '') return '';
       const s = String(v);
-      return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      return (s.includes(',') || s.includes('"') || s.includes('
+')) ? '"' + s.replace(/"/g, '""') + '"' : s;
     }).join(','));
   });
-  const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['﻿' + rows.join('
+')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `TRANG_DOAN_SPSS_${new Date().toISOString().slice(0, 10)}.csv`;
@@ -4291,7 +4761,7 @@ function exportSPSS_CSV() {
 
 function exportBackupJSON() {
   if (!records.length) { alert('Chưa có dữ liệu.'); return; }
-  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.3', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.4', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `TRANG_DOAN_SaoLuu_${new Date().toISOString().slice(0, 10)}.json`;
@@ -4310,7 +4780,7 @@ async function mergeBackupJSON(event) {
     let added = 0, updated = 0;
 
     for (const item of incoming) {
-      const clean = normalizeData(item.data || {});
+      const clean = normalizeData(mapObjectKeysFromSpss(item.data || {}));
       const hsba = (clean.ma_hsba || '').toLowerCase();
       let idx = records.findIndex(r => (item.uid && r.uid === item.uid) || (hsba && (r.data.ma_hsba || '').toLowerCase() === hsba));
       if (idx !== -1) {
