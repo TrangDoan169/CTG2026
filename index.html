@@ -703,10 +703,10 @@
 <header id="mainHeader">
   <div class="header-inner">
     <div>
-      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.4</span></h1>
+      <h1>📋 TRANG ĐOÀN <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:99px;vertical-align:middle">v8.5</span></h1>
     </div>
     <div class="header-actions">
-      <span class="sync-pill" id="liveSyncPill" title="Tự động đồng bộ mỗi 15 giây & ngay khi bấm Lưu">⚪ Chưa gắn link nhóm</span>
+      <span class="sync-pill" id="liveSyncPill" onclick="onSyncPillClick()" style="cursor:pointer" title="Bấm để gắn link nhóm hoặc đồng bộ ngay">⚪ Chưa gắn link nhóm</span>
       <button class="pill-btn" id="openSheetHeaderBtn" onclick="openGoogleSheet()" style="display:none" title="Mở bảng Google Sheet dữ liệu nhóm">📊 Google Sheet</button>
       <button class="pill-btn" onclick="openGuideModal()">📖 Hướng dẫn</button>
       <button class="pill-btn" id="aiStatusPill" onclick="toggleSettings()">👤 Tên của tôi</button>
@@ -742,6 +742,13 @@
     <div id="adminSettingsSection" style="display:none;border-top:1px dashed var(--bd);padding-top:12px;margin-top:8px">
       <div class="alert-box alert-ok">
         👑 <b>Đang bật quyền Admin (TRANG ĐOÀN):</b> Bạn có toàn quyền sàng lọc, duyệt ca, khóa chốt hồ sơ, đổi mã PIN và sao chép link mời nhóm (link mời <b>không</b> kèm mã PIN Admin nên các bạn phụ sẽ tự động ở chế độ Cộng sự).
+      </div>
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px 12px;margin-bottom:12px">
+        <label style="font-size:13.5px;font-weight:800;color:#0369a1;display:block;margin-bottom:5px">⚡ Dán nhanh Link mời nhóm cũ (nếu có sẵn link chứa <code>#key=...&amp;sync=...</code> để tự điền cả 3 ô bên dưới):</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="cfgQuickInvitePaste" autocomplete="off" placeholder="Dán nguyên đường link mời nhóm vào đây rồi bấm Áp dụng..." style="flex:1;min-width:220px">
+          <button type="button" class="sm" onclick="applyPastedInviteLink()">⚡ Áp dụng link</button>
+        </div>
       </div>
       <div class="grid">
         <div class="fld">
@@ -1143,7 +1150,13 @@ function doPost(e) {
     </div>
   </div>
 
-  <!-- THANH CHUYỂN ĐỔI 3 TRẠM LÀM VIỆC (CHỈ HIỆN VỚI ADMIN) -->
+  <!-- THANH NHẮC MỞ KHÓA 3 TRẠM CHO TRƯỞNG NHÓM KHI ĐANG Ở CHẾ ĐỘ CỘNG SỰ -->
+  <div id="collabUnlockBanner" class="alert-box alert-info" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+    <span>👩‍⚕️ <b>Đang ở giao diện Cộng sự (Nhập liệu).</b> Bạn là Trưởng nhóm <b>TRANG ĐOÀN</b>? Mở khóa để hiện đủ 3 trạm: <b>Lọc HSBA · Hồ sơ duyệt · BI Dashboard</b>.</span>
+    <button class="sm" onclick="openPinModal()" style="white-space:nowrap">👑 Mở khóa Admin (PIN)</button>
+  </div>
+
+  <!-- THANH CHUYỂN ĐỔI 3 TRẠM LÀM VIỆC (HIỆN KHI MỞ KHÓA ADMIN) -->
   <div class="mode-bar admin-only" style="display:none">
     <button class="mode-btn active" id="modeBtn_study" onclick="switchMode('study')">
       📚 1. Hồ sơ đã duyệt <span class="mode-badge" id="cntApproved">0</span>
@@ -1690,9 +1703,78 @@ function doPost(e) {
   <img id="imgLightboxImg" alt="Ảnh CTG phóng to">
 </div>
 
+<!-- MODAL NHẬP MÃ PIN ADMIN (HOẠT ĐỘNG 100% TRÊN MỌI ĐIỆN THOẠI & TRÌNH DUYỆT) -->
+<div class="confirm-backdrop" id="pinModal" onclick="if(event.target===this)closePinModal()">
+  <div class="confirm-box" style="max-width:420px">
+    <div class="confirm-hd" style="background:linear-gradient(135deg,#1e1b4b,#0f6fde)">
+      <span>👑 Mở khóa Quyền Admin — TRANG ĐOÀN</span>
+    </div>
+    <div class="confirm-bd">
+      <div style="margin-bottom:10px;font-size:14.5px;color:#1e293b">
+        Nhập <b>Mã PIN Admin</b> để mở đầy đủ 3 trạm làm việc (<b>Lọc HSBA · Hồ sơ duyệt · BI Dashboard</b>) và cài đặt đồng bộ nhóm:
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="password" id="pinModalInput" inputmode="numeric" autocomplete="off" placeholder="Nhập mã PIN (Mặc định: 2025)" onkeydown="if(event.key==='Enter')submitPinModal()" style="font-size:17px;letter-spacing:2px;font-weight:700">
+        <button type="button" class="ghost sm" onclick="togglePinVisibility()" id="btnTogglePinVis" style="min-height:42px;white-space:nowrap">👁️ Hiện</button>
+      </div>
+      <div id="pinModalError" style="color:#dc2626;font-size:13.5px;font-weight:700;margin-top:8px;display:none"></div>
+      <div class="hint" style="margin-top:8px">💡 Mã PIN mặc định ban đầu là <b>2025</b> (trừ khi bạn đã đổi sang số khác).</div>
+    </div>
+    <div class="confirm-ft">
+      <button type="button" class="ghost" onclick="closePinModal()">Đóng</button>
+      <button type="button" class="ok" onclick="submitPinModal()">🔓 Mở khóa Admin</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KHÓA LẠI CHẾ ĐỘ ADMIN -->
+<div class="confirm-backdrop" id="lockAdminModal" onclick="if(event.target===this)closeLockAdminModal()">
+  <div class="confirm-box" style="max-width:420px">
+    <div class="confirm-hd" style="background:#312e81">
+      <span>🔒 Chuyển về giao diện Cộng sự</span>
+    </div>
+    <div class="confirm-bd">
+      Bạn muốn khóa lại chế độ Admin và chuyển về giao diện Cộng sự (chỉ hiện danh sách nhập liệu)?
+    </div>
+    <div class="confirm-ft">
+      <button type="button" class="ghost" onclick="closeLockAdminModal()">Giữ quyền Admin</button>
+      <button type="button" class="warn" onclick="confirmLockAdmin()">🔒 Khóa lại</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NHẬP CHỮ THAY THẾ PROMPT() -->
+<div class="confirm-backdrop" id="textPromptModal" onclick="if(event.target===this)closeTextPromptModal()">
+  <div class="confirm-box" style="max-width:460px">
+    <div class="confirm-hd" id="textPromptTitle" style="background:#0f6fde">Nhập thông tin</div>
+    <div class="confirm-bd">
+      <div id="textPromptDesc" style="margin-bottom:10px;font-size:14.5px;color:#1e293b"></div>
+      <input type="text" id="textPromptInput" autocomplete="off" onkeydown="if(event.key==='Enter')submitTextPromptModal()">
+    </div>
+    <div class="confirm-ft">
+      <button type="button" class="ghost" onclick="closeTextPromptModal()">Hủy</button>
+      <button type="button" class="ok" onclick="submitTextPromptModal()">✅ Xác nhận</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
+// ================= 0. BẢO VỆ BỘ NHỚ TRÌNH DUYỆT (KHÔNG BAO GIỜ CRASH TRÊN MOBILE/FILE://) =================
+const _memLocal = {};
+const _memSession = {};
+const safeLocal = {
+  get(k) { try { return window.safeLocal.get(k); } catch (e) { return Object.prototype.hasOwnProperty.call(_memLocal, k) ? _memLocal[k] : null; } },
+  set(k, v) { _memLocal[k] = String(v); try { window.safeLocal.set(k, String(v)); } catch (e) {} },
+  remove(k) { delete _memLocal[k]; try { window.safeLocal.remove(k); } catch (e) {} }
+};
+const safeSession = {
+  get(k) { try { return window.safeSession.get(k); } catch (e) { return Object.prototype.hasOwnProperty.call(_memSession, k) ? _memSession[k] : null; } },
+  set(k, v) { _memSession[k] = String(v); try { window.safeSession.set(k, String(v)); } catch (e) {} },
+  remove(k) { delete _memSession[k]; try { window.safeSession.remove(k); } catch (e) {} }
+};
+
 // ================= 1. CẤU TRÚC BIẾN SỐ ĐẦY ĐỦ (BẢNG 2.1 + PHỤ LỤC 1 + MỞ RỘNG) =================
 const SECTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
@@ -1855,35 +1937,106 @@ const DERIVED_DEFS = {
 
 // ================= 2. PHÂN QUYỀN ADMIN (TRANG ĐOÀN) VS CỘNG SỰ =================
 const DEFAULT_ADMIN_PIN = '2025';
-let isAdminUnlocked = sessionStorage.getItem('trang_admin_unlocked') === '1';
+let isAdminUnlocked = safeSession.get('trang_admin_unlocked') === '1';
+let _afterPinSuccessCallback = null;
 
 function getAdminPin() {
-  return (localStorage.getItem('ctg_admin_pin') || DEFAULT_ADMIN_PIN).trim();
+  return (safeLocal.get('ctg_admin_pin') || DEFAULT_ADMIN_PIN).trim();
+}
+
+function openPinModal(onSuccessCb) {
+  _afterPinSuccessCallback = typeof onSuccessCb === 'function' ? onSuccessCb : null;
+  const inp = document.getElementById('pinModalInput');
+  const err = document.getElementById('pinModalError');
+  const btnVis = document.getElementById('btnTogglePinVis');
+  inp.value = '';
+  inp.type = 'password';
+  if (btnVis) btnVis.textContent = '👁️ Hiện';
+  err.style.display = 'none';
+  document.getElementById('pinModal').style.display = 'flex';
+  setTimeout(() => inp.focus(), 60);
+}
+
+function closePinModal() {
+  _afterPinSuccessCallback = null;
+  document.getElementById('pinModal').style.display = 'none';
+}
+
+function togglePinVisibility() {
+  const inp = document.getElementById('pinModalInput');
+  const btnVis = document.getElementById('btnTogglePinVis');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btnVis.textContent = '🙈 Ẩn';
+  } else {
+    inp.type = 'password';
+    btnVis.textContent = '👁️ Hiện';
+  }
+  inp.focus();
+}
+
+function submitPinModal() {
+  const inp = document.getElementById('pinModalInput');
+  const err = document.getElementById('pinModalError');
+  const entered = (inp.value || '').trim();
+  if (entered === getAdminPin()) {
+    isAdminUnlocked = true;
+    safeSession.set('trang_admin_unlocked', '1');
+    const cb = _afterPinSuccessCallback;
+    closePinModal();
+    applyRolePermissionsUI();
+    renderAllViews();
+    showToast('👑 Đã mở khóa giao diện Admin: TRANG ĐOÀN!');
+    if (cb) cb();
+  } else {
+    err.textContent = '❌ Sai mã PIN! (Mã mặc định là 2025)';
+    err.style.display = 'block';
+    inp.select();
+  }
+}
+
+function closeLockAdminModal() {
+  document.getElementById('lockAdminModal').style.display = 'none';
+}
+
+function confirmLockAdmin() {
+  closeLockAdminModal();
+  isAdminUnlocked = false;
+  safeSession.remove('trang_admin_unlocked');
+  switchMode('study');
+  applyRolePermissionsUI();
+  renderAllViews();
+  showToast('🔒 Đã chuyển về giao diện Cộng sự');
 }
 
 function toggleAdminAuth() {
   if (isAdminUnlocked) {
-    if (confirm('Khóa lại chế độ Admin và quay về giao diện Cộng sự?')) {
-      isAdminUnlocked = false;
-      sessionStorage.removeItem('trang_admin_unlocked');
-      switchMode('study');
-      applyRolePermissionsUI();
-      renderAllViews();
-      showToast('🔒 Đã chuyển về giao diện Cộng sự');
-    }
+    document.getElementById('lockAdminModal').style.display = 'flex';
     return;
   }
-  const entered = prompt('👑 Nhập Mã PIN Admin (TRANG ĐOÀN) để mở khóa (Mặc định: 2025):');
-  if (entered === null) return;
-  if (entered.trim() === getAdminPin()) {
-    isAdminUnlocked = true;
-    sessionStorage.setItem('trang_admin_unlocked', '1');
-    applyRolePermissionsUI();
-    renderAllViews();
-    showToast('👑 Đã mở khóa giao diện Admin: TRANG ĐOÀN!');
-  } else {
-    alert('❌ Sai mã PIN!');
-  }
+  openPinModal();
+}
+
+let _textPromptCallback = null;
+function openTextPromptModal({ title, desc, placeholder, defaultValue, onConfirm }) {
+  _textPromptCallback = onConfirm;
+  document.getElementById('textPromptTitle').textContent = title || 'Nhập thông tin';
+  document.getElementById('textPromptDesc').innerHTML = desc || '';
+  const inp = document.getElementById('textPromptInput');
+  inp.placeholder = placeholder || '';
+  inp.value = defaultValue || '';
+  document.getElementById('textPromptModal').style.display = 'flex';
+  setTimeout(() => inp.focus(), 60);
+}
+function closeTextPromptModal() {
+  _textPromptCallback = null;
+  document.getElementById('textPromptModal').style.display = 'none';
+}
+function submitTextPromptModal() {
+  const val = document.getElementById('textPromptInput').value;
+  const cb = _textPromptCallback;
+  closeTextPromptModal();
+  if (typeof cb === 'function') cb(val);
 }
 
 function applyRolePermissionsUI() {
@@ -1911,6 +2064,9 @@ function applyRolePermissionsUI() {
 
   const collabFooter = document.getElementById('collabAdminHintFooter');
   if (collabFooter) collabFooter.style.display = isAdminUnlocked ? 'none' : 'block';
+
+  const collabBanner = document.getElementById('collabUnlockBanner');
+  if (collabBanner) collabBanner.style.display = isAdminUnlocked ? 'none' : 'flex';
 
   document.getElementById('adminSettingsSection').style.display = isAdminUnlocked ? 'block' : 'none';
 
@@ -2211,7 +2367,7 @@ function evaluateCompleteness(rec) {
 
 function getActiveLockInfo(rec) {
   if (!rec.editing_by || !rec.editing_at) return null;
-  const myName = (localStorage.getItem('ctg_user_name') || '').trim().toLowerCase();
+  const myName = (safeLocal.get('ctg_user_name') || '').trim().toLowerCase();
   const locker = String(rec.editing_by).trim();
   if (!locker) return null;
   if (myName && locker.toLowerCase() === myName && rec.uid === activeUid) return null;
@@ -2226,6 +2382,7 @@ function getActiveLockInfo(rec) {
 const DB_NAME = 'TRANG_DOAN_CTG_ACOG2025_V7';
 const STORE = 'records';
 let db = null;
+let _memDbRecords = [];
 let records = [];
 let activeUid = null;
 let activeTab = 'A';
@@ -2247,41 +2404,65 @@ window.addEventListener('beforeunload', e => {
 });
 
 function initDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE, { keyPath: 'uid' });
-    };
-    req.onsuccess = e => { db = e.target.result; resolve(db); };
-    req.onerror = e => reject(e.target.error);
+  return new Promise((resolve) => {
+    try {
+      if (!window.indexedDB) { db = null; resolve(null); return; }
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = e => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE, { keyPath: 'uid' });
+      };
+      req.onsuccess = e => { db = e.target.result; resolve(db); };
+      req.onerror = () => { db = null; resolve(null); };
+    } catch (err) {
+      db = null;
+      resolve(null);
+    }
   });
 }
 
 function dbGetAll() {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).getAll();
-    req.onsuccess = () => resolve(req.result.sort((a, b) => a.created_at - b.created_at));
-    req.onerror = () => reject(req.error);
+  if (!db) return Promise.resolve([..._memDbRecords].sort((a, b) => a.created_at - b.created_at));
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () => resolve((req.result || []).sort((a, b) => a.created_at - b.created_at));
+      req.onerror = () => resolve([..._memDbRecords]);
+    } catch (e) {
+      resolve([..._memDbRecords]);
+    }
   });
 }
 
 function dbPut(item) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).put(item);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
+  const idx = _memDbRecords.findIndex(x => x.uid === item.uid);
+  if (idx !== -1) _memDbRecords[idx] = item; else _memDbRecords.push(item);
+  if (!db) return Promise.resolve();
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(item);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch (e) {
+      resolve();
+    }
   });
 }
 
 function dbDelete(uid) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).delete(uid);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
+  _memDbRecords = _memDbRecords.filter(x => x.uid !== uid);
+  if (!db) return Promise.resolve();
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(uid);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch (e) {
+      resolve();
+    }
   });
 }
 
@@ -2303,29 +2484,79 @@ function parseInviteLinkHash() {
   if (!window.location.hash || window.location.hash.length < 3) return;
   try {
     const params = new URLSearchParams(window.location.hash.slice(1));
-    if (params.get('key')) localStorage.setItem('ctg_api_key', params.get('key'));
-    if (params.get('sync')) localStorage.setItem('ctg_sync_url', params.get('sync'));
-    if (params.get('sheet')) localStorage.setItem('ctg_sheet_url', params.get('sheet'));
+    if (params.get('key')) safeLocal.set('ctg_api_key', params.get('key'));
+    if (params.get('sync')) safeLocal.set('ctg_sync_url', params.get('sync'));
+    if (params.get('sheet')) safeLocal.set('ctg_sheet_url', params.get('sheet'));
     history.replaceState(null, '', window.location.pathname + window.location.search);
     showToast('🔗 Đã tự động kết nối kho dữ liệu chung của nhóm!');
   } catch (e) {}
 }
 
-function ensureUserNamePrompt() {
-  let u = (localStorage.getItem('ctg_user_name') || '').trim();
-  if (!u && localStorage.getItem('ctg_sync_url')) {
-    const entered = prompt('👋 Chào bạn! Nhập tên của bạn (VD: Trang, Mai, Lan...) để nhóm hiển thị người đang nhập ca, tránh làm trùng công:');
-    if (entered && entered.trim()) {
-      u = entered.trim();
-      localStorage.setItem('ctg_user_name', u);
-      document.getElementById('cfgUser').value = u;
-      updateTopHeaderUI();
+function onSyncPillClick() {
+  const syncUrl = (safeLocal.get('ctg_sync_url') || '').trim();
+  if (syncUrl) {
+    pullFromCloud(false);
+    return;
+  }
+  if (!isAdminUnlocked) {
+    openPinModal(() => {
+      document.getElementById('settingsCard').style.display = 'block';
+      document.getElementById('cfgSyncUrl').focus();
+    });
+  } else {
+    document.getElementById('settingsCard').style.display = 'block';
+    document.getElementById('cfgSyncUrl').focus();
+  }
+}
+
+function applyPastedInviteLink() {
+  const raw = (document.getElementById('cfgQuickInvitePaste').value || '').trim();
+  if (!raw) { showToast('⚠️ Hãy dán đường link mời nhóm vào ô trước!'); return; }
+  const hashIdx = raw.indexOf('#');
+  const queryStr = hashIdx !== -1 ? raw.slice(hashIdx + 1) : raw;
+  try {
+    const params = new URLSearchParams(queryStr);
+    let found = 0;
+    if (params.get('key')) { document.getElementById('cfgApiKey').value = params.get('key'); found++; }
+    if (params.get('sync')) { document.getElementById('cfgSyncUrl').value = params.get('sync'); found++; }
+    if (params.get('sheet') && document.getElementById('cfgSheetUrl')) { document.getElementById('cfgSheetUrl').value = params.get('sheet'); found++; }
+    if (!found && raw.includes('script.google.com/macros')) {
+      document.getElementById('cfgSyncUrl').value = raw;
+      found = 1;
     }
+    if (found > 0) {
+      document.getElementById('cfgQuickInvitePaste').value = '';
+      showToast(`✅ Đã điền ${found} thông số từ link! Bấm "💾 Lưu toàn bộ cấu hình Admin" để kết nối.`);
+    } else {
+      showToast('⚠️ Không tìm thấy thông số kết nối trong link vừa dán.');
+    }
+  } catch (e) {
+    showToast('⚠️ Link không đúng định dạng.');
+  }
+}
+
+function ensureUserNamePrompt() {
+  let u = (safeLocal.get('ctg_user_name') || '').trim();
+  if (!u && safeLocal.get('ctg_sync_url')) {
+    openTextPromptModal({
+      title: '👋 Chào mừng bạn tham gia nhập liệu',
+      desc: 'Nhập tên của bạn (VD: <b>Trang, Mai, Lan...</b>) để nhóm hiển thị người đang mở ca, tránh làm trùng công:',
+      placeholder: 'Nhập tên của bạn...',
+      onConfirm: (entered) => {
+        if (entered && entered.trim()) {
+          const cleanName = entered.trim();
+          safeLocal.set('ctg_user_name', cleanName);
+          document.getElementById('cfgUser').value = cleanName;
+          updateTopHeaderUI();
+          showToast(`✅ Đã lưu tên: ${cleanName}`);
+        }
+      }
+    });
   }
 }
 
 function openGoogleSheet() {
-  const url = (document.getElementById('cfgSheetUrl')?.value || localStorage.getItem('ctg_sheet_url') || '').trim();
+  const url = (document.getElementById('cfgSheetUrl')?.value || safeLocal.get('ctg_sheet_url') || '').trim();
   if (!url) {
     alert('Bạn chưa dán link Google Sheet vào ô 3b trong Cấu hình Admin (🔐).');
     return;
@@ -2335,14 +2566,14 @@ function openGoogleSheet() {
 
 function loadSettings() {
   parseInviteLinkHash();
-  document.getElementById('cfgUser').value = localStorage.getItem('ctg_user_name') || '';
-  document.getElementById('cfgApiKey').value = localStorage.getItem('ctg_api_key') || '';
-  document.getElementById('cfgSyncUrl').value = localStorage.getItem('ctg_sync_url') || '';
-  if (document.getElementById('cfgSheetUrl')) document.getElementById('cfgSheetUrl').value = localStorage.getItem('ctg_sheet_url') || '';
-  document.getElementById('cfgTargetN').value = localStorage.getItem('ctg_target_n') || '250';
+  document.getElementById('cfgUser').value = safeLocal.get('ctg_user_name') || '';
+  document.getElementById('cfgApiKey').value = safeLocal.get('ctg_api_key') || '';
+  document.getElementById('cfgSyncUrl').value = safeLocal.get('ctg_sync_url') || '';
+  if (document.getElementById('cfgSheetUrl')) document.getElementById('cfgSheetUrl').value = safeLocal.get('ctg_sheet_url') || '';
+  document.getElementById('cfgTargetN').value = safeLocal.get('ctg_target_n') || '250';
   updateTopHeaderUI();
   applyRolePermissionsUI();
-  if (localStorage.getItem('ctg_user_name') && (localStorage.getItem('ctg_api_key') || localStorage.getItem('ctg_sync_url'))) {
+  if (safeLocal.get('ctg_user_name') && (safeLocal.get('ctg_api_key') || safeLocal.get('ctg_sync_url'))) {
     document.getElementById('settingsCard').style.display = 'none';
   }
 }
@@ -2350,7 +2581,7 @@ function loadSettings() {
 function saveCollaboratorName() {
   const u = document.getElementById('cfgUser').value.trim();
   if (!u) { alert('Vui lòng nhập tên của bạn!'); return; }
-  localStorage.setItem('ctg_user_name', u);
+  safeLocal.set('ctg_user_name', u);
   updateTopHeaderUI();
   document.getElementById('settingsCard').style.display = 'none';
   showToast(`✅ Đã lưu tên: ${u}`);
@@ -2372,14 +2603,14 @@ function saveSettings() {
   if (syncVal && syncVal.endsWith('/dev')) {
     alert('⚠️ Bạn đang dán link thử nghiệm (/dev). Hãy vào Apps Script → Triển khai → Quản lý các bản triển khai để lấy link chính thức kết thúc bằng /exec nhé!');
   }
-  localStorage.setItem('ctg_user_name', document.getElementById('cfgUser').value.trim());
-  localStorage.setItem('ctg_api_key', document.getElementById('cfgApiKey').value.trim());
-  localStorage.setItem('ctg_sync_url', syncVal);
-  localStorage.setItem('ctg_sheet_url', sheetVal);
-  localStorage.setItem('ctg_target_n', document.getElementById('cfgTargetN').value.trim() || '250');
+  safeLocal.set('ctg_user_name', document.getElementById('cfgUser').value.trim());
+  safeLocal.set('ctg_api_key', document.getElementById('cfgApiKey').value.trim());
+  safeLocal.set('ctg_sync_url', syncVal);
+  safeLocal.set('ctg_sheet_url', sheetVal);
+  safeLocal.set('ctg_target_n', document.getElementById('cfgTargetN').value.trim() || '250');
   const newPin = document.getElementById('cfgAdminPin').value.trim();
   if (newPin) {
-    localStorage.setItem('ctg_admin_pin', newPin);
+    safeLocal.set('ctg_admin_pin', newPin);
     document.getElementById('cfgAdminPin').value = '';
   }
   updateTopHeaderUI();
@@ -2387,7 +2618,7 @@ function saveSettings() {
   renderAllViews();
   showToast('✅ Đã lưu cài đặt Admin & bật đồng bộ tự động!');
   startAutoSyncLoop();
-  if (localStorage.getItem('ctg_sync_url')) pullFromCloud(false);
+  if (safeLocal.get('ctg_sync_url')) pullFromCloud(false);
 }
 
 function toggleSettings() {
@@ -2397,9 +2628,9 @@ function toggleSettings() {
 }
 
 function updateTopHeaderUI() {
-  const user = localStorage.getItem('ctg_user_name');
-  const syncUrl = localStorage.getItem('ctg_sync_url');
-  const sheetUrl = localStorage.getItem('ctg_sheet_url');
+  const user = safeLocal.get('ctg_user_name');
+  const syncUrl = safeLocal.get('ctg_sync_url');
+  const sheetUrl = safeLocal.get('ctg_sheet_url');
   const pill = document.getElementById('aiStatusPill');
   if (pill) {
     pill.textContent = isAdminUnlocked
@@ -2424,7 +2655,11 @@ function copyShareLink() {
   const fullUrl = `${base}#${hash.toString()}`;
   navigator.clipboard.writeText(fullUrl)
     .then(() => showToast('🔗 Đã sao chép link mời Cộng sự (không kèm PIN Admin)!'))
-    .catch(() => prompt('Sao chép đường link dưới đây:', fullUrl));
+    .catch(() => openTextPromptModal({
+      title: '🔗 Sao chép link mời Cộng sự',
+      desc: 'Bôi đen và sao chép đường link dưới đây gửi cho nhóm:',
+      defaultValue: fullUrl
+    }));
 }
 
 function copyAppsScriptCode() {
@@ -2435,15 +2670,15 @@ function copyAppsScriptCode() {
 }
 
 function getOfflineQueue() {
-  try { return JSON.parse(localStorage.getItem('ctg_offline_queue') || '[]'); } catch (e) { return []; }
+  try { return JSON.parse(safeLocal.get('ctg_offline_queue') || '[]'); } catch (e) { return []; }
 }
 function addToOfflineQueue(uid) {
   const q = getOfflineQueue();
-  if (!q.includes(uid)) { q.push(uid); localStorage.setItem('ctg_offline_queue', JSON.stringify(q)); }
+  if (!q.includes(uid)) { q.push(uid); safeLocal.set('ctg_offline_queue', JSON.stringify(q)); }
 }
 function removeFromOfflineQueue(uid) {
   const q = getOfflineQueue().filter(x => x !== uid);
-  localStorage.setItem('ctg_offline_queue', JSON.stringify(q));
+  safeLocal.set('ctg_offline_queue', JSON.stringify(q));
 }
 
 const SPSS_COL_MAP = {
@@ -2639,7 +2874,7 @@ function buildCloudFlatRow(rec) {
     final_locked: rec.final_locked ? 1 : 0,
     editing_by: rec.editing_by || '',
     editing_at: rec.editing_at || '',
-    last_edited_by: rec.last_edited_by || localStorage.getItem('ctg_user_name') || '',
+    last_edited_by: rec.last_edited_by || safeLocal.get('ctg_user_name') || '',
     trang_thai_nhap: comp.label,
     ...rec.data,
     ...d,
@@ -2712,7 +2947,7 @@ async function applyCloudRowsToLocal(cloudRows) {
 }
 
 async function postToCloudAndSync(payload, offlineUidToQueue) {
-  const syncUrl = (localStorage.getItem('ctg_sync_url') || '').trim();
+  const syncUrl = (safeLocal.get('ctg_sync_url') || '').trim();
   if (!syncUrl) return false;
   setSyncStatus('syncing', 'Đang đồng bộ nhóm...');
   try {
@@ -2746,13 +2981,13 @@ async function pushRecordToCloud(rec) {
   const flatRow = buildCloudFlatRow(rec);
   const ok = await postToCloudAndSync({ action: 'upsert', row: flatRow, imgBase64: rec.imgDataUrl || '' }, rec.uid);
   if (ok) showToast('☁️ Đã lưu & đồng bộ tự động cho cả nhóm!');
-  else if (localStorage.getItem('ctg_sync_url')) showToast('🟠 Mạng yếu: Đã lưu trên máy, sẽ tự đồng bộ khi có mạng!');
+  else if (safeLocal.get('ctg_sync_url')) showToast('🟠 Mạng yếu: Đã lưu trên máy, sẽ tự đồng bộ khi có mạng!');
 }
 
 async function sendCaseLockAction(rec, actionType) {
-  const syncUrl = (localStorage.getItem('ctg_sync_url') || '').trim();
+  const syncUrl = (safeLocal.get('ctg_sync_url') || '').trim();
   if (!syncUrl || !rec) return;
-  const user = (localStorage.getItem('ctg_user_name') || 'Thành viên').trim();
+  const user = (safeLocal.get('ctg_user_name') || 'Thành viên').trim();
   rec.editing_by = actionType === 'claim' ? user : '';
   rec.editing_at = actionType === 'claim' ? new Date().toISOString() : '';
   await dbPut(rec);
@@ -2766,7 +3001,7 @@ async function sendCaseLockAction(rec, actionType) {
 }
 
 async function pullFromCloud(silent) {
-  const syncUrl = (localStorage.getItem('ctg_sync_url') || '').trim();
+  const syncUrl = (safeLocal.get('ctg_sync_url') || '').trim();
   if (!syncUrl || isSyncingNow) return;
   isSyncingNow = true;
   if (!silent) setSyncStatus('syncing', 'Đang tải mới nhất...');
@@ -2806,14 +3041,14 @@ async function pullFromCloud(silent) {
 
 function startAutoSyncLoop() {
   if (autoSyncTimer) clearInterval(autoSyncTimer);
-  if (!localStorage.getItem('ctg_sync_url')) return;
+  if (!safeLocal.get('ctg_sync_url')) return;
   autoSyncTimer = setInterval(() => {
     if (!document.hidden) pullFromCloud(true);
   }, 15000);
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && localStorage.getItem('ctg_sync_url')) {
+  if (!document.hidden && safeLocal.get('ctg_sync_url')) {
     pullFromCloud(true);
   }
 });
@@ -2934,7 +3169,7 @@ async function processBulkImport() {
     document.getElementById('bulkModal').style.display = 'none';
     renderAllViews();
 
-    if (newRecords.length > 0 && localStorage.getItem('ctg_sync_url')) {
+    if (newRecords.length > 0 && safeLocal.get('ctg_sync_url')) {
       const flatRows = newRecords.map(buildCloudFlatRow);
       await postToCloudAndSync({ action: 'bulk_upsert', rows: flatRows }, null);
     }
@@ -3063,7 +3298,7 @@ async function saveScreenDecision(decision) {
   rec.risk_detail = riskDetail;
   rec.screen_status = decision;
   rec.screen_note = note;
-  rec.last_edited_by = localStorage.getItem('ctg_user_name') || 'TRANG ĐOÀN';
+  rec.last_edited_by = safeLocal.get('ctg_user_name') || 'TRANG ĐOÀN';
 
   if (decision === 'excluded') {
     rec.screen_reason = reason;
@@ -3094,7 +3329,7 @@ async function quickScreenAction(uid, action) {
   if (!isAdminUnlocked) { alert('🔒 Chỉ Admin TRANG ĐOÀN mới được phân luồng sàng lọc!'); return; }
   const rec = records.find(r => r.uid === uid);
   if (!rec) return;
-  rec.last_edited_by = localStorage.getItem('ctg_user_name') || 'TRANG ĐOÀN';
+  rec.last_edited_by = safeLocal.get('ctg_user_name') || 'TRANG ĐOÀN';
 
   if (action === 'approve' || action === 'paper_to_approve') {
     if (action === 'paper_to_approve' || rec.screen_status === 'paper_check' || rec.doc_ctg_group === 'group1') {
@@ -3664,7 +3899,7 @@ function createApprovedCase(jumpToB) {
   populateForm({
     ma_nc: nextResearchCode(),
     ngay_thu_thap: new Date().toISOString().slice(0, 10),
-    nguoi_nhap: localStorage.getItem('ctg_user_name') || ''
+    nguoi_nhap: safeLocal.get('ctg_user_name') || ''
   });
   updateEdImagePreview();
   switchTab(jumpToB ? 'B' : 'A');
@@ -3695,8 +3930,8 @@ function openExistingCase(uid, targetTab) {
   applyRolePermissionsUI();
   applyEditorFieldLocks(rec);
 
-  if (!rec.data.nguoi_nhap && localStorage.getItem('ctg_user_name') && !rec.final_locked) {
-    rec.data.nguoi_nhap = localStorage.getItem('ctg_user_name');
+  if (!rec.data.nguoi_nhap && safeLocal.get('ctg_user_name') && !rec.final_locked) {
+    rec.data.nguoi_nhap = safeLocal.get('ctg_user_name');
   }
   populateForm(rec.data);
   updateEdImagePreview();
@@ -3726,20 +3961,24 @@ async function demoteActiveCaseToExclude() {
   if (!isAdminUnlocked || !activeUid) return;
   const rec = records.find(r => r.uid === activeUid);
   if (!rec) return;
-  const reason = prompt(`⚠️ Chuyển HSBA ${rec.data.ma_hsba} về LOẠI TRỪ (giữ nguyên dữ liệu để vẽ lưu đồ STROBE).\nNhập lý do loại trừ:`, rec.screen_reason || 'Không đạt tiêu chuẩn chọn sau khi rà soát hồ sơ');
-  if (reason === null) return;
-
-  rec.screen_status = 'excluded';
-  rec.screen_reason = reason.trim() || 'Loại sau khi rà soát chi tiết';
-  rec.editing_by = '';
-  rec.editing_at = '';
-  await dbPut(rec);
-  hasUnsavedEditorChanges = false;
-  document.getElementById('editorBackdrop').style.display = 'none';
-  activeUid = null;
-  renderAllViews();
-  pushRecordToCloud(rec);
-  showToast(`↩️ Đã chuyển ${rec.data.ma_hsba} về Loại trừ (đã lưu vào Lưu đồ STROBE)!`);
+  openTextPromptModal({
+    title: `↩️ Loại trừ HSBA ${rec.data.ma_hsba} (Giữ lưu đồ STROBE)`,
+    desc: 'Nhập lý do loại trừ (dữ liệu vẫn được bảo toàn để tổng hợp Lưu đồ STROBE):',
+    defaultValue: rec.screen_reason || 'Không đạt tiêu chuẩn chọn sau khi rà soát hồ sơ',
+    onConfirm: async (reason) => {
+      rec.screen_status = 'excluded';
+      rec.screen_reason = (reason || '').trim() || 'Loại sau khi rà soát chi tiết';
+      rec.editing_by = '';
+      rec.editing_at = '';
+      await dbPut(rec);
+      hasUnsavedEditorChanges = false;
+      document.getElementById('editorBackdrop').style.display = 'none';
+      activeUid = null;
+      renderAllViews();
+      pushRecordToCloud(rec);
+      showToast(`↩️ Đã chuyển ${rec.data.ma_hsba} về Loại trừ (đã lưu vào Lưu đồ STROBE)!`);
+    }
+  });
 }
 
 function updateEdImagePreview() {
@@ -3806,7 +4045,7 @@ async function saveCurrentEditor() {
       }
     }
 
-    const myUser = (localStorage.getItem('ctg_user_name') || '').trim();
+    const myUser = (safeLocal.get('ctg_user_name') || '').trim();
     if (!formData.nguoi_nhap && myUser) formData.nguoi_nhap = myUser;
     const finalLockVal = isAdminUnlocked ? document.getElementById('chkFinalLock').checked : false;
 
@@ -3874,7 +4113,7 @@ async function saveCurrentEditor() {
 
 // ================= 10. TRÍCH XUẤT THÔNG SỐ ẢNH CTG TRONG TAB B =================
 function triggerTabBUpload() {
-  const apiKey = (localStorage.getItem('ctg_api_key') || '').trim();
+  const apiKey = (safeLocal.get('ctg_api_key') || '').trim();
   if (!apiKey) {
     alert('⚠️ Chưa cấu hình mã kết nối hệ thống! Hãy nhờ Trưởng nhóm TRANG ĐOÀN gửi link mời nhóm hoặc kiểm tra cài đặt trước nhé.');
     return;
@@ -3908,7 +4147,7 @@ async function handleTabBImageUpload(event) {
   if (!file) return;
   event.target.value = '';
 
-  const apiKey = (localStorage.getItem('ctg_api_key') || '').trim();
+  const apiKey = (safeLocal.get('ctg_api_key') || '').trim();
   const loadEl = document.getElementById('tabBAiLoading');
   const btnEl = document.getElementById('btnTabBUpload');
   loadEl.style.display = 'flex';
@@ -3999,7 +4238,7 @@ function deleteRecord(uid) {
       records = records.filter(r => r.uid !== uid);
       renderAllViews();
       showToast(`🗑️ Đã xóa HSBA ${rec.data.ma_hsba || ''}`);
-      if (localStorage.getItem('ctg_sync_url')) {
+      if (safeLocal.get('ctg_sync_url')) {
         postToCloudAndSync({ action: 'delete', uid: rec.uid, ma_hsba: rec.data.ma_hsba || '' }, null);
       }
     }
@@ -4159,7 +4398,7 @@ function renderBiDashboard() {
 
   const approved = records.filter(r => r.screen_status === 'approved');
   const total = approved.length;
-  const targetN = Math.max(1, Number(localStorage.getItem('ctg_target_n') || 250));
+  const targetN = Math.max(1, Number(safeLocal.get('ctg_target_n') || 250));
   const pctTarget = Math.min(100, Math.round((total / targetN) * 100));
 
   let clean100 = 0, hiRisk = 0, mlt = 0, apgar5Low = 0, nicu = 0;
@@ -4759,7 +4998,7 @@ function exportSPSS_CSV() {
 
 function exportBackupJSON() {
   if (!records.length) { alert('Chưa có dữ liệu.'); return; }
-  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.4', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'TRANG_DOAN_v8.5', exported_at: new Date().toISOString(), records }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `TRANG_DOAN_SaoLuu_${new Date().toISOString().slice(0, 10)}.json`;
@@ -4834,10 +5073,10 @@ function clearAllData() {
     onConfirm: async () => {
       const tx = db.transaction(STORE, 'readwrite');
       tx.objectStore(STORE).clear();
-      localStorage.removeItem('ctg_offline_queue');
+      safeLocal.remove('ctg_offline_queue');
       records = [];
       renderAllViews();
-      if (localStorage.getItem('ctg_sync_url')) {
+      if (safeLocal.get('ctg_sync_url')) {
         await postToCloudAndSync({ action: 'clear_all' }, null);
       }
       showToast('🗑️ Đã xóa sạch dữ liệu test trên máy & Google Sheet — sẵn sàng bắt đầu từ NC_001!');
@@ -4857,7 +5096,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   renderAllViews();
   ensureUserNamePrompt();
   startAutoSyncLoop();
-  if (localStorage.getItem('ctg_sync_url')) pullFromCloud(true);
+  if (safeLocal.get('ctg_sync_url')) pullFromCloud(true);
 });
 </script>
 </body>
